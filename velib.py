@@ -28,7 +28,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 zoom_script = """
 <script>
-    document.body.style.zoom = "90%";
+    document.body.style.zoom = "70%";
 </script>
 """
 
