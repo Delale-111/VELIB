@@ -24,9 +24,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-x = "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"
-
-openai.api_key = x  
+openai.api_key = os.getenv("OPENAI_API_KEY")
+ 
 
 zoom_level = 0.70
 zoom_s = 0.5
