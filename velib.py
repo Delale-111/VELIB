@@ -26,9 +26,6 @@ st.set_page_config(
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
  
-
-zoom_level = 0.70
-zoom_s = 0.5
 st.markdown(
     f"""
     <style>
@@ -51,14 +48,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown("""
-    <style>
-    .appview-container .main {
-        transform: scale(0.9);  /* ajuste ici le zoom */
-        transform-origin: top left;
-    }
-    </style>
-""", unsafe_allow_html=True)
 
 def haversine(lat1, lon1, lat2, lon2) -> float:
         """Distance en km entre 2 points lat/lon."""
