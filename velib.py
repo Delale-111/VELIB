@@ -1213,10 +1213,7 @@ elif st.session_state.selected == "PILOTAGE":
 
 
 elif st.session_state.selected == "DOCUMENTATION":
-    # ─────────────────────────────────────
-    # SECTION – DOCUMENTATION COMPLÈTE
-    # ─────────────────────────────────────
-    st.divider()
+
     st.markdown("## 📚 Explication de l'interface de **PILOTAGE**")
 
     ###############################################################################
