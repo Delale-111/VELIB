@@ -50,6 +50,14 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.markdown("""
+    <style>
+    .appview-container .main {
+        transform: scale(0.9);  /* ajuste ici le zoom */
+        transform-origin: top left;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 def haversine(lat1, lon1, lat2, lon2) -> float:
         """Distance en km entre 2 points lat/lon."""
