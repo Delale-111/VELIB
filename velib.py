@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-x = "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"
+x = "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"
 
 openai.api_key = x  
 
