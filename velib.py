@@ -26,15 +26,6 @@ st.set_page_config(
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-zoom_script = """
-<script>
-    document.body.style.zoom = "70%";
-</script>
-"""
-
-components.html(zoom_script, height=0, width=0)
-
-
 st.markdown(
     """
     <style>
