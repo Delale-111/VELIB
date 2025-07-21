@@ -26,23 +26,39 @@ st.set_page_config(
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-zoom_level = 0.70
-zoom_s = 0.5
+zoom_script = """
+<script>
+    document.body.style.zoom = "90%";
+</script>
+"""
+
+components.html(zoom_script, height=0, width=0)
+
+
 st.markdown(
-    f"""
+    """
     <style>
-    .main {{zoom:{zoom_level};}}
-    .custom-sidebar {{zoom:{zoom_s};}}
-    section.main > div:first-child {{padding-top:0.3rem;}}
-    div[data-testid="stMetric"] div {{justify-content:flex-start;}}
-    .dynamic-shadow{{transition:box-shadow 0.3s,transform 0.3s;
-                    box-shadow:0 4px 8px rgba(0,0,0,0.1);border-radius:10px;}}
-    .dynamic-shadow:hover{{transform:translateY(-5px);
-                         box-shadow:0 8px 16px rgba(0,0,255,0.3);}}
-    .report-card{{background:linear-gradient(135deg,#6e8efb,#a777e3);
-                  padding:20px;border-radius:10px;color:white;
-                  box-shadow:0 4px 8px rgba(0,0,0,0.1);}}
-    .report-card:hover{{box-shadow:0 8px 16px rgba(0,0,255,0.3);}}
+    section.main > div:first-child {padding-top:0.3rem;}
+    div[data-testid="stMetric"] div {justify-content:flex-start;}
+    .dynamic-shadow {
+        transition: box-shadow 0.3s, transform 0.3s;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border-radius: 10px;
+    }
+    .dynamic-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,255,0.3);
+    }
+    .report-card {
+        background: linear-gradient(135deg,#6e8efb,#a777e3);
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .report-card:hover {
+        box-shadow: 0 8px 16px rgba(0,0,255,0.3);
+    }
     </style>
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
