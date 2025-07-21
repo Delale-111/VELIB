@@ -24,7 +24,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-openai.api_key = "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"  # 🔑 inchangée
+x = "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"
+
+openai.api_key = x  
 
 zoom_level = 0.70
 zoom_s = 0.5
