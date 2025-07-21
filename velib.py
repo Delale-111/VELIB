@@ -1217,7 +1217,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     # SECTION – DOCUMENTATION COMPLÈTE
     # ─────────────────────────────────────
     st.divider()
-    st.markdown("## 📚 Documentation détaillée — Page **PILOTAGE**")
+    st.markdown("## 📚 Explication de l'interface de **PILOTAGE**")
 
     ###############################################################################
     # 1. KPI « Stations vides », « Stations pleines », « Hors service »
