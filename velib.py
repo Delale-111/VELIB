@@ -25,7 +25,9 @@ st.set_page_config(
 )
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
- 
+
+zoom_level = 0.70
+zoom_s = 0.5
 st.markdown(
     f"""
     <style>
