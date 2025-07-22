@@ -1474,7 +1474,3 @@ elif st.session_state.selected == "DOCUMENTATION":
         )
         return resp.choices[0].message["content"].strip()
     """, language="python", line_numbers=True)
-
-    st.success("🎉 Fin de la documentation — l’utilisateur dispose désormais d’une vue complète sur la logique de la page *Pilotage*.")
-
-    # Fin de la section documentation
