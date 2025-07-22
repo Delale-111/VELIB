@@ -181,6 +181,29 @@ with st.sidebar:
         </style>
     """, unsafe_allow_html=True)
 
+    # ──────────────────────────────
+    # ⏱️ Chronomètre en haut du menu
+    # ──────────────────────────────
+    import time
+
+    # Initialiser le chrono une seule fois
+    if "chrono_start" not in st.session_state:
+        st.session_state.chrono_start = time.time()
+
+    # Affichage dynamique
+    chrono_placeholder = st.empty()
+
+    def update_chrono():
+        elapsed = int(time.time() - st.session_state.chrono_start)
+        h, m, s = elapsed // 3600, (elapsed % 3600) // 60, elapsed % 60
+        chrono_placeholder.markdown(
+            f"<h4 style='text-align:center;'>⏱️ Chrono : {h:02d}:{m:02d}:{s:02d}</h4>",
+            unsafe_allow_html=True
+        )
+
+    update_chrono()
+
+    # Menu de navigation
     st.session_state.selected = option_menu(
         'DASHBOARD', 
         ["DONNÉES", "EXPLORATION", "PILOTAGE", "DOCUMENTATION"], 
@@ -188,6 +211,13 @@ with st.sidebar:
         menu_icon='cast', 
         default_index=0
     )
+
+    # (Optionnel) Rerun pour faire tourner le chrono régulièrement
+    # Cela évite qu’il se fige quand aucun élément de la page ne change
+    if int(time.time()) % 5 == 0:
+        time.sleep(1)
+        st.experimental_rerun()
+
 
 
 if st.session_state.selected == "DONNÉES":
