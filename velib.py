@@ -1,3 +1,4 @@
+import os
 import math
 import tempfile
 from datetime import datetime
@@ -187,7 +188,6 @@ with st.sidebar:
         menu_icon='cast', 
         default_index=0
     )
-
 
 
 if st.session_state.selected == "DONNÉES":
@@ -1476,5 +1476,3 @@ elif st.session_state.selected == "DOCUMENTATION":
     """, language="python", line_numbers=True)
 
     st.success("🎉 Fin de la documentation — l’utilisateur dispose désormais d’une vue complète sur la logique de la page *Pilotage*.")
-
-    # Fin de la section documentation
