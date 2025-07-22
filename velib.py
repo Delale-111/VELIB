@@ -18,44 +18,67 @@ import networkx as nx
 from pyvis.network import Network
 
 
+
 st.set_page_config(
     page_title="🚲 Vélib' Dashboard — Temps réel",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
-st.markdown(
-    """
-    <style>
-    section.main > div:first-child {padding-top:0.3rem;}
-    div[data-testid="stMetric"] div {justify-content:flex-start;}
-    .dynamic-shadow {
-        transition: box-shadow 0.3s, transform 0.3s;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        border-radius: 10px;
-    }
-    .dynamic-shadow:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0,0,255,0.3);
-    }
-    .report-card {
-        background: linear-gradient(135deg,#6e8efb,#a777e3);
-        padding: 20px;
-        border-radius: 10px;
-        color: white;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .report-card:hover {
-        box-shadow: 0 8px 16px rgba(0,0,255,0.3);
-    }
-    </style>
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    """,
-    unsafe_allow_html=True,
-)
+
+# Splash screen (affiché 1 seule fois)
+if "splash_shown" not in st.session_state:
+    st.session_state.splash_shown = False
+
+if not st.session_state.splash_shown:
+    st.markdown("""
+        <style>
+        .splash-message {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: white;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-family: sans-serif;
+            color: black;
+            text-align: center;
+        }
+        </style>
+        <div class="splash-message" id="splash">
+            🔍 Merci de régler votre <b>zoom à 75 %</b> pour une visibilité optimale.<br><br>
+            Chargement de l’interface…
+        </div>
+        <script>
+            setTimeout(function() {
+                const splash = document.getElementById("splash");
+                if (splash) {
+                    splash.style.transition = "opacity 1s ease";
+                    splash.style.opacity = "0";
+                    setTimeout(() => splash.remove(), 1000);
+                }
+            }, 5000);
+        </script>
+    """, unsafe_allow_html=True)
+    
+    st.session_state.splash_shown = True
+    st.stop()
+
+
+
+
+
+
+
+openai.api_key = "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"  # 🔑 inchangée
+
+
+
 
 
 def haversine(lat1, lon1, lat2, lon2) -> float:
@@ -188,6 +211,7 @@ with st.sidebar:
         menu_icon='cast', 
         default_index=0
     )
+
 
 
 if st.session_state.selected == "DONNÉES":
