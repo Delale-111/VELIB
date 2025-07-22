@@ -1226,7 +1226,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     ###############################################################################
     # 1. KPI « Stations vides », « Stations pleines », « Hors service »
     ###############################################################################
-    doc1_txt, doc1_code = st.columns([2, 1])
+    doc1_txt, doc1_code = st.columns([3, 2])
     with doc1_txt:
         st.markdown("""
     ### 1️⃣ Cartes KPI
@@ -1282,7 +1282,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     # 2. Tableaux interactifs (stations critiques, peu / très sollicitées)
     ###############################################################################
     st.markdown("---")
-    doc2_txt, doc2_code = st.columns([2, 1])
+    doc2_txt, doc2_code = st.columns([3, 2])
     with doc2_txt:
         st.markdown("""
     ### 2️⃣ Tableaux interactifs
@@ -1326,7 +1326,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     # 3. Graphiques comparatifs par arrondissement
     ###############################################################################
     st.markdown("---")
-    doc3_txt, doc3_code = st.columns([2, 1])
+    doc3_txt, doc3_code = st.columns([3, 2])
     with doc3_txt:
         st.markdown("""
     ### 3️⃣ Graphiques comparatifs
@@ -1373,7 +1373,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     # 4. Cartographie – densité & rééquilibrage
     ###############################################################################
     st.markdown("---")
-    doc4_txt, doc4_code = st.columns([2, 1])
+    doc4_txt, doc4_code = st.columns([3, 2])
     with doc4_txt:
         st.markdown("""
     ### 4️⃣ Cartes géospatiales
@@ -1441,7 +1441,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     # 5. Rapport opérationnel (OpenAI)
     ###############################################################################
     st.markdown("---")
-    doc5_txt, doc5_code = st.columns([2, 1])
+    doc5_txt, doc5_code = st.columns([3, 2])
     with doc5_txt:
         st.markdown("""
     ### 5️⃣ Rapport opérationnel (GPT-3.5)
