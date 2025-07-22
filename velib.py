@@ -1,3 +1,4 @@
+import time
 import os
 import math
 import tempfile
@@ -172,23 +173,42 @@ def load_data() -> pd.DataFrame:
 
 df = load_data()
 
-with st.sidebar:
-    st.markdown("""
-        <style>
-        .css-1d391kg, .css-16idsys, .nav-link {
-            font-size: 10px !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+if "chrono_start_ts" not in st.session_state:
+    st.session_state.chrono_start_ts = time.time()
 
+
+with st.sidebar:
+    chrono_start_ts = int(st.session_state.chrono_start_ts * 1000)  
+
+    components.html(f"""
+        <div style="font-size:17px;font-weight:bold;margin:10px 0;">
+            <span style="margin-right:8px;">⏱️</span>Chrono en cours :
+            <span id="elapsedTime" style="color:deepskyblue;font-family:monospace;"></span>
+        </div>
+        <script>
+        const start = {chrono_start_ts};
+        function updateElapsedTime() {{
+            const now = Date.now();
+            let elapsed = Math.floor((now - start) / 1000);
+            const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+            elapsed %= 3600;
+            const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+            const s = String(elapsed % 60).padStart(2, '0');
+            document.getElementById("elapsedTime").textContent = h + ":" + m + ":" + s;
+        }}
+        setInterval(updateElapsedTime, 1000);
+        updateElapsedTime();
+        </script>
+    """, height=60)
+
+    # Ensuite, ton menu
     st.session_state.selected = option_menu(
-        'DASHBOARD', 
-        ["DONNÉES", "EXPLORATION", "PILOTAGE", "DOCUMENTATION"], 
-        icons = ['database','search', 'speedometer', 'file-earmark-text'], 
-        menu_icon='cast', 
+        'DASHBOARD',
+        ["DONNÉES", "EXPLORATION", "PILOTAGE", "DOCUMENTATION"],
+        icons=['database', 'search', 'speedometer', 'file-earmark-text'],
+        menu_icon='cast',
         default_index=0
     )
-
 
 if st.session_state.selected == "DONNÉES":
 
@@ -1226,7 +1246,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     ###############################################################################
     # 1. KPI « Stations vides », « Stations pleines », « Hors service »
     ###############################################################################
-    doc1_txt, doc1_code = st.columns([3, 2])
+    doc1_txt, doc1_code = st.columns([2, 1])
     with doc1_txt:
         st.markdown("""
     ### 1️⃣ Cartes KPI
@@ -1282,7 +1302,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     # 2. Tableaux interactifs (stations critiques, peu / très sollicitées)
     ###############################################################################
     st.markdown("---")
-    doc2_txt, doc2_code = st.columns([3, 2])
+    doc2_txt, doc2_code = st.columns([2, 1])
     with doc2_txt:
         st.markdown("""
     ### 2️⃣ Tableaux interactifs
@@ -1326,7 +1346,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     # 3. Graphiques comparatifs par arrondissement
     ###############################################################################
     st.markdown("---")
-    doc3_txt, doc3_code = st.columns([3, 2])
+    doc3_txt, doc3_code = st.columns([2, 1])
     with doc3_txt:
         st.markdown("""
     ### 3️⃣ Graphiques comparatifs
@@ -1373,7 +1393,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     # 4. Cartographie – densité & rééquilibrage
     ###############################################################################
     st.markdown("---")
-    doc4_txt, doc4_code = st.columns([3, 2])
+    doc4_txt, doc4_code = st.columns([2, 1])
     with doc4_txt:
         st.markdown("""
     ### 4️⃣ Cartes géospatiales
@@ -1441,7 +1461,7 @@ elif st.session_state.selected == "DOCUMENTATION":
     # 5. Rapport opérationnel (OpenAI)
     ###############################################################################
     st.markdown("---")
-    doc5_txt, doc5_code = st.columns([3, 2])
+    doc5_txt, doc5_code = st.columns([2, 1])
     with doc5_txt:
         st.markdown("""
     ### 5️⃣ Rapport opérationnel (GPT-3.5)
@@ -1474,3 +1494,5 @@ elif st.session_state.selected == "DOCUMENTATION":
         )
         return resp.choices[0].message["content"].strip()
     """, language="python", line_numbers=True)
+
+    st.success("🎉 Fin de la documentation — l’utilisateur dispose désormais d’une vue complète sur la logique de la page *Pilotage*.")
