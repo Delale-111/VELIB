@@ -182,7 +182,7 @@ with st.sidebar:
 
     components.html(f"""
         <div style="font-size:17px;font-weight:bold;margin:10px 0;">
-            <span style="margin-right:8px;">⏱️</span>Chrono en cours :
+            <span style="margin-right:8px;">⏱️</span>Chrono :
             <span id="elapsedTime" style="color:deepskyblue;font-family:monospace;"></span>
         </div>
         <script>
