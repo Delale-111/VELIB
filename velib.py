@@ -230,31 +230,33 @@ if st.session_state.selected == "DONNÉES":
     """)
 
     # Architecture d’acquisition simplifiée
-    st.markdown("### 📦 Architecture simplifiée")
-    st.code("""
-                +---------------------------+
-                |  open-data.paris.fr API   |
-                +------------+--------------+
-                                |
-                        Requête GET (JSON)
-                                |
-                +-------------v--------------+
-                |   Fonction `load_data()`   |
-                +-------------+--------------+
-                                |
-                    Nettoyage & filtrage
-                                |
-                +-------------v--------------+
-                |  DataFrame exploitable     |
-                +---------------------------+
-    """, language="text")
 
-    st.markdown("---")
     st.markdown("### ⚙️ Fonction d'acquisition")
 
     col1, col2 = st.columns([1, 2])
 
     with col1:
+        st.markdown("### 📦 Architecture simplifiée")
+        st.code("""
+                    +---------------------------+
+                    |  open-data.paris.fr API   |
+                    +------------+--------------+
+                                    |
+                            Requête GET (JSON)
+                                    |
+                    +-------------v--------------+
+                    |   Fonction `load_data()`   |
+                    +-------------+--------------+
+                                    |
+                        Nettoyage & filtrage
+                                    |
+                    +-------------v--------------+
+                    |  DataFrame exploitable     |
+                    +---------------------------+
+        """, language="text")
+    
+        st.markdown("---")
+    
         st.markdown("""
     Voici les étapes de récupération des données :
 
