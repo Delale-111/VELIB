@@ -229,14 +229,10 @@ if st.session_state.selected == "DONNÉES":
     ---
     """)
 
-    # Architecture d’acquisition simplifiée
-
-    st.markdown("### ⚙️ Fonction d'acquisition")
-
     col1, col2 = st.columns([1, 2])
 
     with col1:
-        st.markdown("### 📦 Architecture simplifiée")
+        st.markdown("### ⚙️ Architecture simplifiée")
         st.code("""
                     +---------------------------+
                     |  open-data.paris.fr API   |
