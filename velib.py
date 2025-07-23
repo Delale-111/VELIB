@@ -601,8 +601,6 @@ elif st.session_state.selected == "EXPLORATION":
 
     c_tbl, c_code = st.columns([3, 1])
     with c_tbl:
-        st.markdown("**Stations capacité atypique (<5 ou >50) :**")
-        st.dataframe(df_extreme[["name", "capacity", "bikes", "docks"]], use_container_width=True)
 
         st.markdown("**Stations où `bikes` > `capacity` :**")
         st.dataframe(df_incoh[["name", "bikes", "capacity", "fill_rate"]], use_container_width=True)
