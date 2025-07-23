@@ -594,10 +594,8 @@ elif st.session_state.selected == "EXPLORATION":
     # 3. Outliers & incohérences
     # ─────────────────────────────────────
     st.markdown("---")
-    st.markdown("### 🧪 3 Valeurs extrêmes & incohérences")
-    st.markdown("**Stations capacité atypique (<5 ou >50) :**")
-    st.dataframe(df_extreme[["name", "capacity", "bikes", "docks"]], use_container_width=True)
-    
+    st.markdown("### 🧪 3 Valeurs incohérences")
+
     df_extreme = df[(df["capacity"] < 5) | (df["capacity"] > 50)]
     df_incoh   = df[df["bikes"] > df["capacity"]]
 
