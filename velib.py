@@ -61,148 +61,128 @@ st.markdown(
 
 
 def haversine(lat1, lon1, lat2, lon2) -> float:
-        """Distance en km entre 2 points lat/lon."""
-        R = 6371
-        phi1, phi2 = np.radians(lat1), np.radians(lat2)
-        dphi, dl = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
-        a = np.sin(dphi / 2) ** 2 + np.cos(phi1) * np.cos(phi2) * np.sin(dl / 2) ** 2
-        return 2 * R * np.arcsin(np.sqrt(a))
+    """Distance en km entre 2 points lat/lon."""
+    R = 6371
+    phi1, phi2 = np.radians(lat1), np.radians(lat2)
+    dphi, dl = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
+    a = np.sin(dphi / 2) ** 2 + np.cos(phi1) * np.cos(phi2) * np.sin(dl / 2) ** 2
+    return 2 * R * np.arcsin(np.sqrt(a))
+
 
 def find_rebalance_pairs(df: pd.DataFrame, max_pairs: int = 5) -> list[tuple]:
-        """
-        Pour chaque station vide, trouve la station la plus proche
-        avec ≥ 5 vélos disponibles. Renvoie max_pairs suggestions.
-        """
-        need = df[df["bikes"] == 0].copy()
-        supply = df[df["bikes"] >= 5].copy()
-        pairs = []
-        for _, row in need.sort_values("capacity", ascending=False).head(max_pairs).iterrows():
-            dists = haversine(row["lat"], row["lon"], supply["lat"], supply["lon"])
-            idx_min = dists.idxmin()
-            donor = supply.loc[idx_min]
-            pairs.append(
-                {
-                    "dest_name": row["name"],
-                    "dest_arr": row["arr"],
-                    "donor_name": donor["name"],
-                    "donor_bikes": int(donor["bikes"]),
-                    "distance_km": round(float(dists[idx_min]), 2),
-                }
-            )
-            supply = supply.drop(idx_min)
-        return pairs
+    """
+    Pour chaque station vide, je trouve la station la plus proche
+    avec ≥ 5 vélos disponibles. Je renvoie max_pairs suggestions.
+    """
+    need = df[df["bikes"] == 0].copy()
+    supply = df[df["bikes"] >= 5].copy()
+    pairs = []
+    for _, row in need.sort_values("capacity", ascending=False).head(max_pairs).iterrows():
+        dists = haversine(row["lat"], row["lon"], supply["lat"], supply["lon"])
+        if dists.empty:
+            continue
+        idx_min = dists.idxmin()
+        donor = supply.loc[idx_min]
+        pairs.append(
+            {
+                "dest_name": row["name"],
+                "dest_arr": row["arr"],
+                "donor_name": donor["name"],
+                "donor_bikes": int(donor["bikes"]),
+                "distance_km": round(float(dists[idx_min]), 2),
+            }
+        )
+        supply = supply.drop(idx_min)
+    return pairs
+
 
 def generate_report(summary_dict: dict, pairs: list[dict]) -> str:
-        """
-        Appel OpenAI : produit une synthèse opérationnelle
-        + conseils (≤ 120 mots).
-        """
-        now = datetime.utcnow().strftime("%d/%m/%Y %H:%M UTC")
-        pairs_txt = "\n".join(
-            [
-                f"- {p['donor_name']} ({p['donor_bikes']} vélos, {p['distance_km']} km) → {p['dest_name']}"
-                for p in pairs
-            ]
-        ) or "Aucune suggestion de ré‑équilibrage (réseau stable)."
-        prompt = f"""
-        Contexte : réseau Vélib' temps réel le {now}.
-        Indicateurs :
-        • stations totales : {summary_dict['n_total']}
-        • stations vides : {summary_dict['k_empty']}
-        • stations pleines : {summary_dict['k_full']}
-        • stations HS : {summary_dict['k_hs']}
-        • taux opérationnel : {summary_dict['p_op']:.1f} %
+    """
+    Appel OpenAI : je produis une synthèse opérationnelle
+    + conseils (≤ 120 mots).
+    """
+    now = datetime.utcnow().strftime("%d/%m/%Y %H:%M UTC")
+    pairs_txt = "\n".join(
+        [
+            f"- {p['donor_name']} ({p['donor_bikes']} vélos, {p['distance_km']} km) → {p['dest_name']}"
+            for p in pairs
+        ]
+    ) or "Aucune suggestion de ré-équilibrage (réseau stable)."
+    prompt = f"""
+    Contexte : réseau Vélib' temps réel le {now}.
+    Indicateurs :
+    • stations totales : {summary_dict['n_total']}
+    • stations vides : {summary_dict['k_empty']}
+    • stations pleines : {summary_dict['k_full']}
+    • stations HS : {summary_dict['k_hs']}
+    • taux opérationnel : {summary_dict['p_op']:.1f} %
 
-        Voici des propositions de ré‑équilibrage :
-        {pairs_txt}
+    Voici des propositions de ré-équilibrage :
+    {pairs_txt}
 
-        Rédige un bref rapport (≤ 120 mots) en français :
-        ➊ Résume la situation générale.
-        ➋ Identifie la station la plus urgente.
-        ➌ Donne 2 conseils opérationnels immédiats basés sur les paires ci‑dessus.
-        ➍ Termine par une phrase proactive.
-        """
-        try:
-            resp = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "Tu es un expert logistique Vélib'."},
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=180,
-                temperature=0.7,
-                top_p=0.9,
-            )
-            return resp.choices[0].message["content"].strip()
-        except Exception as e:
-            return f"Erreur OpenAI : {e}"
+    Rédige un bref rapport (≤ 120 mots) en français :
+    ➊ Résume la situation générale.
+    ➋ Identifie la station la plus urgente.
+    ➌ Donne 2 conseils opérationnels immédiats basés sur les paires ci-dessus.
+    ➍ Termine par une phrase proactive.
+    """
+    try:
+        resp = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Tu es un expert logistique Vélib'."},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=180,
+            temperature=0.7,
+            top_p=0.9,
+        )
+        return resp.choices[0].message["content"].strip()
+    except Exception as e:
+        return f"Erreur OpenAI : {e}"
 
-    # ─────────────────────────────────────
-    # CHARGEMENT DES DONNÉES
-    # ─────────────────────────────────────
+
+# ─────────────────────────────────────
+# CHARGEMENT DES DONNÉES
+# ─────────────────────────────────────
 DATA_URL = (
-        "https://opendata.paris.fr/api/records/1.0/search/"
-        "?dataset=velib-disponibilite-en-temps-reel&rows=5000&sort=stationcode"
-    )
+    "https://opendata.paris.fr/api/records/1.0/search/"
+    "?dataset=velib-disponibilite-en-temps-reel&rows=5000&sort=stationcode"
+)
 
 @st.cache_data(ttl=120, show_spinner="📡 Chargement des données…")
 def load_data() -> pd.DataFrame:
-        r = requests.get(DATA_URL, timeout=20)
-        r.raise_for_status()
-        recs = []
-        for rec in r.json()["records"]:
-            f = rec["fields"]
-            lat, lon = f.get("coordonnees_geo", [None, None])
-            recs.append(
-                {
-                    "code": f.get("stationcode"),
-                    "name": f.get("name"),
-                    "arr": f.get("nom_arrondissement_communes"),
-                    "capacity": f.get("capacity", 0),
-                    "bikes": f.get("numbikesavailable", 0),
-                    "docks": f.get("numdocksavailable", 0),
-                    "lat": lat,
-                    "lon": lon,
-                    "installed": str(f.get("is_installed")).lower() in {"1", "true", "yes", "oui"},
-                    "renting": str(f.get("is_renting")).lower() in {"1", "true", "yes", "oui"},
-                    "returning": str(f.get("is_returning")).lower() in {"1", "true", "yes", "oui"},
-                }
-            )
-        df = pd.DataFrame(recs)
-        df["fill_rate"] = df["bikes"] / df["capacity"].replace({0: np.nan})
-        return df.dropna(subset=["lat", "lon"])
+    r = requests.get(DATA_URL, timeout=20)
+    r.raise_for_status()
+    recs = []
+    for rec in r.json()["records"]:
+        f = rec["fields"]
+        lat, lon = f.get("coordonnees_geo", [None, None])
+        recs.append(
+            {
+                "code": f.get("stationcode"),
+                "name": f.get("name"),
+                "arr": f.get("nom_arrondissement_communes"),
+                "capacity": f.get("capacity", 0),
+                "bikes": f.get("numbikesavailable", 0),
+                "docks": f.get("numdocksavailable", 0),
+                "lat": lat,
+                "lon": lon,
+                "installed": str(f.get("is_installed")).lower() in {"1", "true", "yes", "oui"},
+                "renting": str(f.get("is_renting")).lower() in {"1", "true", "yes", "oui"},
+                "returning": str(f.get("is_returning")).lower() in {"1", "true", "yes", "oui"},
+            }
+        )
+    df = pd.DataFrame(recs)
+    df["fill_rate"] = df["bikes"] / df["capacity"].replace({0: np.nan})
+    return df.dropna(subset=["lat", "lon"])
 
 df = load_data()
 
-if "chrono_start_ts" not in st.session_state:
-    st.session_state.chrono_start_ts = time.time()
-
-
+# ─────────────────────────────────────
+# SIDEBAR (sans minuteur)
+# ─────────────────────────────────────
 with st.sidebar:
-    chrono_start_ts = int(st.session_state.chrono_start_ts * 1000)  
-
-    components.html(f"""
-        <div style="font-size:17px;font-weight:bold;margin:10px 0;">
-            <span style="margin-right:8px;">⏱️</span>Chrono en cours :
-            <span id="elapsedTime" style="color:deepskyblue;font-family:monospace;"></span>
-        </div>
-        <script>
-        const start = {chrono_start_ts};
-        function updateElapsedTime() {{
-            const now = Date.now();
-            let elapsed = Math.floor((now - start) / 1000);
-            const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
-            elapsed %= 3600;
-            const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
-            const s = String(elapsed % 60).padStart(2, '0');
-            document.getElementById("elapsedTime").textContent = h + ":" + m + ":" + s;
-        }}
-        setInterval(updateElapsedTime, 1000);
-        updateElapsedTime();
-        </script>
-    """, height=60)
-
-    # Ensuite, ton menu
     st.session_state.selected = option_menu(
         'DASHBOARD',
         ["DONNÉES", "EXPLORATION", "PILOTAGE", "CHATBOT VELIB"],
@@ -211,18 +191,20 @@ with st.sidebar:
         default_index=0
     )
 
+# ─────────────────────────────────────
+# PAGES
+# ─────────────────────────────────────
 if st.session_state.selected == "DONNÉES":
 
     # ─────────────────────────────────────
     # SECTION 1 – SOURCE DES DONNÉES
     # ─────────────────────────────────────
-
     st.markdown("## 🗂️ 1. Source des données")
 
     st.markdown("""
-    Les données affichées dans ce dashboard proviennent de la **plateforme OpenData de la Ville de Paris**, et sont mises à jour en temps réel.
+    Les données affichées dans ce dashboard proviennent de la **plateforme OpenData de la Ville de Paris** et sont mises à jour en temps réel.
 
-    Nous interrogeons directement l’**API REST JSON** de la ressource suivante :
+    J’interroge directement l’**API REST JSON** de la ressource suivante :
 
     🔗 [Vélib’ - Disponibilité en temps réel](https://opendata.paris.fr/explore/dataset/velib-disponibilite-en-temps-reel)
 
@@ -237,15 +219,15 @@ if st.session_state.selected == "DONNÉES":
                     +---------------------------+
                     |  open-data.paris.fr API   |
                     +------------+--------------+
-                                    |
-                            Requête GET (JSON)
-                                    |
+                                     |
+                              Requête GET (JSON)
+                                     |
                     +-------------v--------------+
                     |   Fonction `load_data()`   |
                     +-------------+--------------+
-                                    |
-                        Nettoyage & filtrage
-                                    |
+                                     |
+                           Nettoyage & filtrage
+                                     |
                     +-------------v--------------+
                     |  DataFrame exploitable     |
                     +---------------------------+
@@ -254,43 +236,43 @@ if st.session_state.selected == "DONNÉES":
         st.markdown("---")
     
         st.markdown("""
-    Voici les étapes de récupération des données :
+    Voici les étapes de récupération des données que j’effectue :
 
-    1. Construction de l’URL d’accès à l’API
-    2. Requête HTTP `GET` avec `requests`
-    3. Parsing des enregistrements JSON
-    4. Création d’un `DataFrame` structuré
+    1. Construction de l’URL d’accès à l’API  
+    2. Requête HTTP `GET` avec `requests`  
+    3. Parsing des enregistrements JSON  
+    4. Création d’un `DataFrame` structuré  
     5. Nettoyage et calcul du champ `fill_rate`
 
-    Les résultats sont **mis en cache pendant 2 minutes** pour éviter des appels répétés à l’API.
+    Je **mets en cache les résultats pendant 2 minutes** pour éviter des appels répétés à l’API.
         """)
 
     with col2:
         st.code("""
-    @st.cache_data(ttl=120, show_spinner="📡 Chargement des données…")
-    def load_data() -> pd.DataFrame:
-        r = requests.get(DATA_URL, timeout=20)
-        r.raise_for_status()
-        recs = []
-        for rec in r.json()["records"]:
-            f = rec["fields"]
-            lat, lon = f.get("coordonnees_geo", [None, None])
-            recs.append({
-                "code": f.get("stationcode"),
-                "name": f.get("name"),
-                "arr": f.get("nom_arrondissement_communes"),
-                "capacity": f.get("capacity", 0),
-                "bikes": f.get("numbikesavailable", 0),
-                "docks": f.get("numdocksavailable", 0),
-                "lat": lat,
-                "lon": lon,
-                "installed": str(f.get("is_installed")).lower() in {"1", "true", "yes", "oui"},
-                "renting": str(f.get("is_renting")).lower() in {"1", "true", "yes", "oui"},
-                "returning": str(f.get("is_returning")).lower() in {"1", "true", "yes", "oui"},
-            })
-        df = pd.DataFrame(recs)
-        df["fill_rate"] = df["bikes"] / df["capacity"].replace({0: np.nan})
-        return df.dropna(subset=["lat", "lon"])
+@st.cache_data(ttl=120, show_spinner="📡 Chargement des données…")
+def load_data() -> pd.DataFrame:
+    r = requests.get(DATA_URL, timeout=20)
+    r.raise_for_status()
+    recs = []
+    for rec in r.json()["records"]:
+        f = rec["fields"]
+        lat, lon = f.get("coordonnees_geo", [None, None])
+        recs.append({
+            "code": f.get("stationcode"),
+            "name": f.get("name"),
+            "arr": f.get("nom_arrondissement_communes"),
+            "capacity": f.get("capacity", 0),
+            "bikes": f.get("numbikesavailable", 0),
+            "docks": f.get("numdocksavailable", 0),
+            "lat": lat,
+            "lon": lon,
+            "installed": str(f.get("is_installed")).lower() in {"1", "true", "yes", "oui"},
+            "renting": str(f.get("is_renting")).lower() in {"1", "true", "yes", "oui"},
+            "returning": str(f.get("is_returning")).lower() in {"1", "true", "yes", "oui"},
+        })
+    df = pd.DataFrame(recs)
+    df["fill_rate"] = df["bikes"] / df["capacity"].replace({0: np.nan})
+    return df.dropna(subset=["lat", "lon"])
         """, language="python")
 
     st.markdown("---")
@@ -300,11 +282,11 @@ if st.session_state.selected == "DONNÉES":
 
     with col3:
         st.markdown("""
-    Les données sont ensuite nettoyées :
+    Je nettoie ensuite les données :
 
-    - Transformation des flags logiques (ex. `is_renting`)
-    - Suppression des valeurs manquantes (`NaN`)
-    - Calcul du **taux de remplissage** : `fill_rate`
+    - Transformation des flags logiques (ex. `is_renting`)  
+    - Suppression des valeurs manquantes (`NaN`)  
+    - Calcul du **taux de remplissage** : `fill_rate`  
     - Filtrage des stations sans coordonnées géographiques
 
     Cela garantit un DataFrame propre et exploitable pour les visualisations.
@@ -312,27 +294,22 @@ if st.session_state.selected == "DONNÉES":
 
     with col4:
         st.code("""
-    df["fill_rate"] = df["bikes"] / df["capacity"].replace({0: np.nan})
-    df = df.dropna(subset=["lat", "lon"])
+df["fill_rate"] = df["bikes"] / df["capacity"].replace({0: np.nan})
+df = df.dropna(subset=["lat", "lon"])
         """, language="python")
 
     st.divider()
 
-    
-
-
     # ─────────────────────────────────────
     # SECTION 2 – VARIABLES DISPONIBLES
     # ─────────────────────────────────────
-
     st.markdown("## 📑 2. Variables disponibles")
 
     st.markdown("""
-    Les données récupérées depuis l’API contiennent plusieurs **champs bruts** que nous filtrons, nettoyons et enrichissons.  
+    Les données récupérées depuis l’API contiennent plusieurs **champs bruts** que je filtre, nettoie et enrichis.  
     Voici les principales **colonnes du DataFrame** exploité dans ce dashboard :
     """)
 
-    # ► Tableau descriptif des variables
     var_data = [
         ["`code`", "str", "Code unique de la station"],
         ["`name`", "str", "Nom de la station Vélib’"],
@@ -369,15 +346,14 @@ if st.session_state.selected == "DONNÉES":
         st.markdown("""
     Ce graphe représente les **relations logiques et calculées** entre les différentes variables utilisées dans le DataFrame.
 
-    - `fill_rate` dépend de `bikes` et `capacity`
-    - `capacity` est la somme de `bikes` et `docks`
-    - `renting` et `returning` conditionnent respectivement `bikes` et `docks`
-    - `installed` est nécessaire pour que la station soit active
+    - `fill_rate` dépend de `bikes` et `capacity`  
+    - `capacity` est la somme de `bikes` et `docks`  
+    - `renting` et `returning` conditionnent respectivement `bikes` et `docks`  
+    - `installed` est nécessaire pour que la station soit active  
     - `lat/lon` + `arr` sont utilisés pour la géolocalisation
         """)
 
     with col_right:
-        # Définir le graphe NetworkX
         G = nx.DiGraph()
 
         nodes = [
@@ -400,48 +376,18 @@ if st.session_state.selected == "DONNÉES":
         G.add_nodes_from(nodes)
         G.add_edges_from(edges)
 
-        # PyVis interactive graph
         net = Network(height="500px", width="100%", bgcolor="white", font_color="black", directed=True)
-
         net.barnes_hut()
         net.from_nx(G)
 
         net.set_options("""
         const options = {
-        "nodes": {
-            "shape": "dot",
-            "size": 16,
-            "font": {
-            "size": 18,
-            "color": "white"
-            },
-            "color": {
-            "highlight": {
-                "border": "white",
-                "background": "darkorchid"
-            }
-            }
-        },
-        "edges": {
-            "color": {
-            "color": "gray",
-            "highlight": "darkGoldenRod"
-            },
-            "arrows": {
-            "to": {"enabled": true}
-            },
-            "smooth": false
-        },
-        "physics": {
-            "forceAtlas2Based": {
-            "gravitationalConstant": -50,
-            "centralGravity": 0.01,
-            "springLength": 100,
-            "springConstant": 0.08
-            },
-            "minVelocity": 0.75,
-            "solver": "forceAtlas2Based"
-        }
+          "nodes":{"shape":"dot","size":16,"font":{"size":18,"color":"white"},
+                   "color":{"highlight":{"border":"white","background":"darkorchid"}}},
+          "edges":{"color":{"color":"gray","highlight":"darkGoldenRod"},
+                   "arrows":{"to":{"enabled":true}},"smooth":false},
+          "physics":{"forceAtlas2Based":{"gravitationalConstant":-50,"centralGravity":0.01,
+                   "springLength":100,"springConstant":0.08},"minVelocity":0.75,"solver":"forceAtlas2Based"}
         }
         """)
 
@@ -452,44 +398,19 @@ if st.session_state.selected == "DONNÉES":
         components.html(open(html_path, "r", encoding="utf-8").read(), height=550)
         os.remove(html_path)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 elif st.session_state.selected == "EXPLORATION":
 
     # ─────────────────────────────────────
     # SECTION – ANALYSE EXPLORATOIRE (EDA)
     # ─────────────────────────────────────
 
-
-
-    # 🔑 (la clé OpenAI est déjà définie plus haut : openai.api_key)
-
-    # ── Helper : explication automatique d’un visuel ────────────────────────────
     def explain_plot(title: str,
                     variable: str | None,
                     df_src: pd.DataFrame,
                     extra: dict | None = None,
                     model: str = "gpt-3.5-turbo") -> str:
         """
-        Retourne une synthèse (4‑6 lignes) générée par OpenAI
+        Je retourne une synthèse (4-6 lignes) générée par OpenAI
         pour expliquer le visuel concerné.
         """
         stats_block = ""
@@ -500,12 +421,12 @@ elif st.session_state.selected == "EXPLORATION":
             stats_block += f"\nInfos supplémentaires : {extra}"
 
         prompt = f"""
-    Tu es un expert en data‑science.
-    Explique en français (4‑6 phrases) le graphique « {title} ».
-    Mentionne la distribution ou tendance, les valeurs typiques,
-    les outliers éventuels et l’interprétation possible.
-    {stats_block}
-    """
+Tu es un expert en data-science.
+Explique en français (4-6 phrases) le graphique « {title} ».
+Mentionne la distribution ou tendance, les valeurs typiques,
+les outliers éventuels et l’interprétation possible.
+{stats_block}
+"""
         try:
             resp = openai.ChatCompletion.create(
                 model=model,
@@ -518,28 +439,26 @@ elif st.session_state.selected == "EXPLORATION":
             )
             return resp.choices[0].message["content"].strip()
         except Exception as e:
-            return f"⚠️ Erreur OpenAI : {e}"
+            return f"⚠️ Erreur OpenAI : {e}"
 
-    # ── 0. En‑tête ──────────────────────────────────────────────────────────────
+    # ── 0. En-tête ──────────────────────────────────────────────────────────────
     st.markdown("## 📊 Analyse exploratoire des données")
 
     st.markdown("""
-    Cette section réalise une EDA complète :
+    Dans cette section, je réalise une EDA complète :
 
-    - **Univarié** : distributions & statistiques  
-    - **Bivarié / multivarié** : corrélations, regroupements  
-    - **Géospatial** : carte de densité  
-    - **Qualité des données** : valeurs manquantes, outliers  
+    - **Univarié** : distributions & statistiques  
+    - **Bivarié / multivarié** : corrélations, regroupements  
+    - **Géospatial** : carte de densité  
+    - **Qualité des données** : valeurs manquantes, outliers  
 
     Chaque visuel est suivi d’une **interprétation générée par OpenAI**.  
-    Pour certains graphiques, le **code de calcul** est affiché à droite.
+    Pour certains graphiques, j’affiche le **code de calcul** à droite.
     """)
 
-    # ─────────────────────────────────────
     # 1. Statistiques descriptives globales
-    # ─────────────────────────────────────
     st.markdown("---")
-    st.markdown("### 🧮 1 Statistiques descriptives globales")
+    st.markdown("### 🧮 1 Statistiques descriptives globales")
 
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -549,80 +468,70 @@ elif st.session_state.selected == "EXPLORATION":
         st.markdown("**Types de variables :**")
         st.write(df.dtypes.value_counts())
 
-    # ─────────────────────────────────────
     # 2. Distributions univariées
-    # ─────────────────────────────────────
     st.markdown("---")
-    st.markdown("### 📈 2 Distribution des variables numériques")
+    st.markdown("### 📈 2 Distribution des variables numériques")
 
     num_cols = ["bikes", "docks", "capacity", "fill_rate"]
 
     for col in num_cols:
         st.markdown(f"#### 🔹 Distribution de `{col}`")
 
-        g_col, code_col = st.columns([3, 1])  # graphe à gauche, code à droite
+        g_col, code_col = st.columns([3, 1])
 
-        # — Graphe
         with g_col:
             fig = px.histogram(df, x=col, nbins=40, marginal="box",
-                            title=f"Distribution de {col}")
+                               title=f"Distribution de {col}")
             fig.update_layout(height=350)
             st.plotly_chart(fig, use_container_width=True)
 
-        # — Code (uniquement pour bikes & fill_rate pour l’exemple)
         with code_col:
             if col in ["bikes", "fill_rate"]:
                 st.code(f"""
-    # Distribution de {col}
-    fig = px.histogram(
-        df,
-        x="{col}",
-        nbins=40,
-        marginal="box",
-        title="Distribution de {col}"
-    )
-    st.plotly_chart(fig)
-    """, language="python")
+# Distribution de {col}
+fig = px.histogram(
+    df,
+    x="{col}",
+    nbins=40,
+    marginal="box",
+    title="Distribution de {col}"
+)
+st.plotly_chart(fig)
+""", language="python")
 
-        # — Interprétation OpenAI
-        with st.expander("🧠 Interprétation OpenAI", expanded=False):
+        with st.expander("🧠 Interprétation OpenAI", expanded=False):
             st.markdown(explain_plot(f"Distribution de {col}", col, df))
 
-    # ─────────────────────────────────────
     # 3. Outliers & incohérences
-    # ─────────────────────────────────────
     st.markdown("---")
-    st.markdown("### 🧪 3 Valeurs incohérences")
+    st.markdown("### 🧪 3 Valeurs incohérences")
 
     df_extreme = df[(df["capacity"] < 5) | (df["capacity"] > 50)]
     df_incoh   = df[df["bikes"] > df["capacity"]]
 
     c_tbl, c_code = st.columns([3, 1])
     with c_tbl:
-
         st.markdown("**Stations où `bikes` > `capacity` :**")
         st.dataframe(df_incoh[["name", "bikes", "capacity", "fill_rate"]], use_container_width=True)
 
     with c_code:
         st.code("""
-    # Détection simple d'outliers
-    df_extreme = df[(df["capacity"] < 5) | (df["capacity"] > 50)]
+# Détection simple d'outliers
+df_extreme = df[(df["capacity"] < 5) | (df["capacity"] > 50)]
 
-    # Incohérence logique
-    df_incoh   = df[df["bikes"] > df["capacity"]]
-    """, language="python")
+# Incohérence logique
+df_incoh   = df[df["bikes"] > df["capacity"]]
+""", language="python")
 
-    with st.expander("🧠 Interprétation OpenAI – Outliers", expanded=False):
+    with st.expander("🧠 Interprétation OpenAI – Outliers", expanded=False):
         st.markdown(explain_plot("Analyse des valeurs extrêmes",
-                                None, df,
-                                extra={"cap_outliers": len(df_extreme),
+                                 None, df,
+                                 extra={"cap_outliers": len(df_extreme),
                                         "inc_bikes>cap": len(df_incoh)}))
 
-    # ─────────────────────────────────────
     # 4. Corrélations
-    # ─────────────────────────────────────
     st.markdown("---")
-    st.markdown("### 🔄 4 Corrélations entre variables")
+    st.markdown("### 🔄 4 Corrélations entre variables")
 
     corr_matrix = df[num_cols].corr()
 
@@ -641,71 +550,65 @@ elif st.session_state.selected == "EXPLORATION":
 
     with code_corr:
         st.code("""
-    # Matrice de corrélation
-    corr = df[["bikes","docks","capacity","fill_rate"]].corr()
-    fig = go.Figure(data=go.Heatmap(z=corr.values, x=corr.columns, y=corr.columns))
-    st.plotly_chart(fig)
-    """, language="python")
+# Matrice de corrélation
+corr = df[["bikes","docks","capacity","fill_rate"]].corr()
+fig = go.Figure(data=go.Heatmap(z=corr.values, x=corr.columns, y=corr.columns))
+st.plotly_chart(fig)
+""", language="python")
 
-    with st.expander("🧠 Interprétation OpenAI – Corrélations", expanded=False):
+    with st.expander("🧠 Interprétation OpenAI – Corrélations", expanded=False):
         corr_flat = (corr_matrix.where(~np.eye(corr_matrix.shape[0], dtype=bool))
                                 .stack().round(2).to_dict())
         st.markdown(explain_plot("Matrice de corrélation", None, df,
-                                extra={"top_pairs": dict(list(corr_flat.items())[:5])}))
+                                 extra={"top_pairs": dict(list(corr_flat.items())[:5])}))
 
-    # ─────────────────────────────────────
     # 5. Analyse par arrondissement
-    # ─────────────────────────────────────
     st.markdown("---")
-    st.markdown("### 🏙️ 5 Analyse par arrondissement")
+    st.markdown("### 🏙️ 5 Analyse par arrondissement")
 
     grouped_arr = df.groupby("arr")[["bikes", "capacity", "fill_rate"]].mean().reset_index()
 
-    # — Vélos moyens
     ga_g, ga_c = st.columns([3, 1])
     with ga_g:
         fig_arr = px.bar(grouped_arr.sort_values("bikes", ascending=False),
-                        x="arr", y="bikes",
-                        title="Vélos moyens par station (arr.)")
+                         x="arr", y="bikes",
+                         title="Vélos moyens par station (arr.)")
         fig_arr.update_layout(height=400)
         st.plotly_chart(fig_arr, use_container_width=True)
     with ga_c:
         st.code("""
-    # Moyenne par arrondissement
-    grouped = df.groupby("arr")["bikes"].mean().reset_index()
-    fig = px.bar(grouped, x="arr", y="bikes")
-    """, language="python")
+# Moyenne par arrondissement
+grouped = df.groupby("arr")["bikes"].mean().reset_index()
+fig = px.bar(grouped, x="arr", y="bikes")
+""", language="python")
 
-    with st.expander("🧠 Interprétation – Vélos moyens", expanded=False):
+    with st.expander("🧠 Interprétation – Vélos moyens", expanded=False):
         st.markdown(explain_plot("Vélos moyens par arrondissement",
-                                None, df,
-                                extra={"mean_bikes": grouped_arr.set_index('arr')["bikes"].round(1).to_dict()}))
+                                 None, df,
+                                 extra={"mean_bikes": grouped_arr.set_index('arr')["bikes"].round(1).to_dict()}))
 
-    # — Taux de remplissage
     ga2_g, ga2_c = st.columns([3, 1])
     with ga2_g:
         fig_rate = px.bar(grouped_arr.sort_values("fill_rate", ascending=False),
-                        x="arr", y="fill_rate",
-                        title="Taux de remplissage moyen (arr.)")
+                          x="arr", y="fill_rate",
+                          title="Taux de remplissage moyen (arr.)")
         fig_rate.update_layout(height=400)
         st.plotly_chart(fig_rate, use_container_width=True)
     with ga2_c:
         st.code("""
-    # Taux de remplissage moyen
-    grouped = df.groupby("arr")["fill_rate"].mean().reset_index()
-    fig = px.bar(grouped, x="arr", y="fill_rate")
-    """, language="python")
+# Taux de remplissage moyen
+grouped = df.groupby("arr")["fill_rate"].mean().reset_index()
+fig = px.bar(grouped, x="arr", y="fill_rate")
+""", language="python")
 
-    with st.expander("🧠 Interprétation – Taux de remplissage", expanded=False):
+    with st.expander("🧠 Interprétation – Taux de remplissage", expanded=False):
         st.markdown(explain_plot("Taux de remplissage moyen par arrondissement",
-                                None, df,
-                                extra={"mean_fill": grouped_arr.set_index('arr')["fill_rate"].round(2).to_dict()}))
+                                 None, df,
+                                 extra={"mean_fill": grouped_arr.set_index('arr')["fill_rate"].round(2).to_dict()}))
 
-    # ─────────────────────────────────────
     # 6. Carte de chaleur géographique
-    # ─────────────────────────────────────
     st.markdown("---")
-    st.markdown("### 🌍 6 Carte de chaleur géographique")
+    st.markdown("### 🌍 6 Carte de chaleur géographique")
 
     g_map, code_map = st.columns([3, 1])
     with g_map:
@@ -721,21 +624,19 @@ elif st.session_state.selected == "EXPLORATION":
 
     with code_map:
         st.code("""
-    fig = px.density_mapbox(
-        df, lat="lat", lon="lon", z="bikes", radius=15,
-        center=dict(lat=df["lat"].mean(), lon=df["lon"].mean()),
-        zoom=11, mapbox_style="carto-positron")
-    """, language="python")
+fig = px.density_mapbox(
+    df, lat="lat", lon="lon", z="bikes", radius=15,
+    center=dict(lat=df["lat"].mean(), lon=df["lon"].mean()),
+    zoom=11, mapbox_style="carto-positron")
+""", language="python")
 
-    with st.expander("🧠 Interprétation – Carte", expanded=False):
+    with st.expander("🧠 Interprétation – Carte", expanded=False):
         st.markdown(explain_plot("Carte de chaleur vélos", None, df,
-                                extra={"stations": len(df)}))
+                                 extra={"stations": len(df)}))
 
-    # ─────────────────────────────────────
     # 7. Données manquantes & invalides
-    # ─────────────────────────────────────
     st.markdown("---")
-    st.markdown("### 🧠 7 Données manquantes & invalides")
+    st.markdown("### 🧠 7 Données manquantes & invalides")
 
     nulls = df.isna().sum()
     invalid_cap0 = (df["capacity"] == 0).sum()
@@ -745,63 +646,59 @@ elif st.session_state.selected == "EXPLORATION":
         st.write("**Nulls (>0) :**")
         st.write(nulls[nulls > 0])
 
-        st.write(f"🔴 Stations `capacity == 0` : **{invalid_cap0}**")
+        st.write(f"🔴 Stations `capacity == 0` : **{invalid_cap0}**")
 
         fig_invalid = px.histogram(df[df["capacity"] == 0], x="bikes", nbins=20,
-                                title="`bikes` lorsque `capacity == 0`")
+                                   title="`bikes` lorsque `capacity == 0`")
         fig_invalid.update_layout(height=350)
         st.plotly_chart(fig_invalid, use_container_width=True)
 
     with nm_c:
         st.code("""
-    nulls = df.isna().sum()
-    invalid = df[df["capacity"] == 0]
-    """, language="python")
+nulls = df.isna().sum()
+invalid = df[df["capacity"] == 0]
+""", language="python")
 
-    with st.expander("🧠 Interprétation – Qualité des données", expanded=False):
+    with st.expander("🧠 Interprétation – Qualité des données", expanded=False):
         st.markdown(explain_plot("Qualité des données", None, df,
-                                extra={"nulls": nulls[nulls > 0].to_dict(),
+                                 extra={"nulls": nulls[nulls > 0].to_dict(),
                                         "capacity0": int(invalid_cap0)}))
 
-    # ─────────────────────────────────────
-    # 8. Conclusion
-    # ─────────────────────────────────────
+    # Conclusion
     st.markdown("---")
-    st.markdown("### 🔚 8 Conclusion exploratoire")
+    st.markdown("### 🔚 8 Conclusion exploratoire")
 
     st.markdown("""
     - **Capacités** très hétérogènes (de <10 à >50 bornes).  
-    - **Outliers** rares : quelques stations « méga‑capacité » ou incohérences (`bikes > capacity`).  
-    - **Corrélations** : `fill_rate` fortement lié à `bikes` et `capacity`.  
-    - **Géographie** : zones à forte densité de vélos vs. zones en sous‑charge.  
-    - **Qualité** : très peu de valeurs nulles, données globalement fiables.
+    - **Outliers** rares : quelques stations « méga-capacité » ou incohérences (`bikes > capacity`).  
+    - **Corrélations** : `fill_rate` fortement lié à `bikes` et `capacity`.  
+    - **Géographie** : zones à forte densité de vélos vs. zones en sous-charge.  
+    - **Qualité** : très peu de valeurs nulles, données globalement fiables.
     """)
 
 elif st.session_state.selected == "PILOTAGE":
 
     # ─────────────────────────────────────
-    # SIDEBAR : CONTRÔLES
+    # SIDEBAR : CONTRÔLES
     # ─────────────────────────────────────
-    st.sidebar.header("⚙️ Contrôles")
+    st.sidebar.header("⚙️ Contrôles")
     if st.sidebar.button("🔄 Rafraîchir"):
         st.cache_data.clear()
 
     df_all = df
     arr_all = sorted(df_all["arr"].dropna().unique())
-    with st.sidebar.expander("📍 Filtrer par arrondissement", expanded=False):
+    with st.sidebar.expander("📍 Filtrer par arrondissement", expanded=False):
         arr_sel = st.multiselect(
             "Arrondissements",
             options=arr_all,
             default=[],
             placeholder="Tous les arrondissements",
         )
-        st.caption("Sélection : **" + (", ".join(arr_sel) if arr_sel else "Tous") + "**")
+        st.caption("Sélection : **" + (", ".join(arr_sel) if arr_sel else "Tous") + "**")
     df = df_all[df_all["arr"].isin(arr_sel)] if arr_sel else df_all.copy()
     n_total = len(df)
 
-    # ─────────────────────────────────────
-    # KPI CALCULS
-    # ─────────────────────────────────────
+    # KPI CALCULS
     mask_empty = df["bikes"] == 0
     mask_almost_empty = (df["bikes"] <= 2) & ~mask_empty
     mask_full = df["docks"] == 0
@@ -823,12 +720,9 @@ elif st.session_state.selected == "PILOTAGE":
         "p_op": p_op,
     }
 
-
     pairs = find_rebalance_pairs(df)
     report_text = generate_report(summary, pairs)
 
-
-        
     col1, col2, col3 = st.columns(3)
 
     # ► Stations vides
@@ -841,7 +735,7 @@ elif st.session_state.selected == "PILOTAGE":
                 <div>
                     <h4 style="color:white;margin:0;font-size:14px;">STATIONS VIDES</h4>
                     <p style="font-size:26px;color:white;margin:0;">{k_empty}</p>
-                    <p style="font-size:14px;color:white;margin:0;">Quasi-vides : {p_almost_empty:.1f}%</p>
+                    <p style="font-size:14px;color:white;margin:0;">Quasi-vides : {p_almost_empty:.1f}%</p>
                 </div>
                 <div><i class="fas fa-bicycle" style="font-size:30px;color:white;"></i></div>
             </div>
@@ -859,7 +753,7 @@ elif st.session_state.selected == "PILOTAGE":
                 <div>
                     <h4 style="color:white;margin:0;font-size:14px;">STATIONS PLEINES</h4>
                     <p style="font-size:26px;color:white;margin:0;">{k_full}</p>
-                    <p style="font-size:14px;color:white;margin:0;">Quasi-pleines : {p_almost_full:.1f}%</p>
+                    <p style="font-size:14px;color:white;margin:0;">Quasi-pleines : {p_almost_full:.1f}%</p>
                 </div>
                 <div><i class="fas fa-parking" style="font-size:30px;color:white;"></i></div>
             </div>
@@ -875,9 +769,9 @@ elif st.session_state.selected == "PILOTAGE":
                 style="background:linear-gradient(135deg,#6e8efb,#a777e3);padding:15px;
                         display:flex;justify-content:space-between;align-items:center;border-radius:10px;">
                 <div>
-                    <h4 style="color:white;margin:0;font-size:14px;">STATIONS HORS SERVICE</h4>
+                    <h4 style="color:white;margin:0;font-size:14px;">STATIONS HORS SERVICE</h4>
                     <p style="font-size:26px;color:white;margin:0;">{k_hs}</p>
-                    <p style="font-size:14px;color:white;margin:0;">Opérationnelles : {p_op:.1f}%</p>
+                    <p style="font-size:14px;color:white;margin:0;">Opérationnelles : {p_op:.1f}%</p>
                 </div>
                 <div><i class="fas fa-tools" style="font-size:30px;color:white;"></i></div>
             </div>
@@ -885,15 +779,11 @@ elif st.session_state.selected == "PILOTAGE":
             unsafe_allow_html=True,
         )
 
-
     st.divider()
 
-    # ─────────────────────────────────────
-    # MIDDLE ROW : TABLEAUX + RAPPORT
-    # ─────────────────────────────────────
+    # MIDDLE : TABLEAUX + RAPPORT
     mid_left, mid_right = st.columns([2, 2], gap="medium")
 
-    # ► Tableau des situations
     with mid_left:
         with st.container(border=True):
             tab1, tab2, tab3 = st.tabs(["⚠️ Stations critiques", "📉 Peu sollicitées", "📈 Très sollicitées"])
@@ -916,7 +806,7 @@ elif st.session_state.selected == "PILOTAGE":
                     column_config={
                         "Taux de remplissage": st.column_config.ProgressColumn(
                             "Taux de remplissage",
-                            format="%.1f %%",
+                            format="%.1f %%",
                             min_value=0,
                             max_value=100,
                         ),
@@ -945,7 +835,7 @@ elif st.session_state.selected == "PILOTAGE":
                     column_config={
                         "Taux de remplissage": st.column_config.ProgressColumn(
                             "Taux de remplissage",
-                            format="%.1f %%",
+                            format="%.1f %%",
                             min_value=0,
                             max_value=100,
                         ),
@@ -974,7 +864,7 @@ elif st.session_state.selected == "PILOTAGE":
                     column_config={
                         "Taux de remplissage": st.column_config.ProgressColumn(
                             "Taux de remplissage",
-                            format="%.1f %%",
+                            format="%.1f %%",
                             min_value=0,
                             max_value=100,
                         ),
@@ -984,120 +874,108 @@ elif st.session_state.selected == "PILOTAGE":
                     height=500,
                 )
 
-
     st.divider()
 
-    # ► Rapport détaillé (remplace la jauge)
     with mid_right:
-            with st.container(border=True):
-                bt1, bt2, bt3 = st.tabs(["🏙️ Stations", "🔴 % Rupture", "📊 Taux moyen"])
+        with st.container(border=True):
+            bt1, bt2, bt3 = st.tabs(["🏙️ Stations", "🔴 % Rupture", "📊 Taux moyen"])
 
-                # Supprimer les enregistrements mal catégorisés
-                df_viz = df[~df["arr"].isin(["Paris"])].copy()
+            df_viz = df[~df["arr"].isin(["Paris"])].copy()
+            chart_height = 500
 
-                # Paramètre global d'affichage
-                chart_height = 500
+            # 1. Nombre de stations
+            stats = df_viz.groupby("arr").size().reset_index(name="stations")
+            stats = stats.sort_values("stations", ascending=False)
 
-                # ───── 🏙️ Graphique 1 : Nombre de stations ─────
-                stats = df_viz.groupby("arr").size().reset_index(name="stations")
-                stats = stats.sort_values("stations", ascending=False)
-
-                with bt1:
-                    fig1 = px.bar(
-                        stats,
-                        x="arr",
-                        y="stations",
-                        title="Nombre de stations par arrondissement",
-                        labels={"arr": "Arrondissement", "stations": "Nombre de stations"},
-                    )
-                    fig1.update_traces(marker_line_width=1.5)
-                    fig1.update_layout(
-                        height=chart_height,
-                        xaxis_tickangle=-45,
-                        xaxis_title=None,
-                        yaxis_title=None,
-                        margin=dict(l=10, r=10, t=60, b=10),
-                        bargap=0.3,
-                    )
-                    st.plotly_chart(fig1, use_container_width=True)
-
-                # ───── 🔴 Graphique 2 : Taux de rupture (stations vides uniquement) ─────
-                # On ne garde que les arrondissements avec au moins 3 stations
-                station_counts = df_viz.groupby("arr").size()
-                valid_arrs = station_counts[station_counts >= 3].index
-
-                rupt = (
-                    df_viz.assign(rupture=mask_empty)
-                    .groupby("arr")["rupture"]
-                    .mean()
-                    .mul(100)
-                    .reset_index()
+            with bt1:
+                fig1 = px.bar(
+                    stats,
+                    x="arr",
+                    y="stations",
+                    title="Nombre de stations par arrondissement",
+                    labels={"arr": "Arrondissement", "stations": "Nombre de stations"},
                 )
-                rupt = rupt[rupt["arr"].isin(valid_arrs)]
-                rupt = rupt[rupt["rupture"] > 0]  # Supprimer ceux à 0%
-                rupt = rupt.sort_values("rupture", ascending=False)
-
-                with bt2:
-                    fig2 = px.bar(
-                        rupt,
-                        x="arr",
-                        y="rupture",
-                        title="Pourcentage de stations en rupture",
-                        labels={"arr": "Arrondissement", "rupture": "% de stations vides"},
-                    )
-                    fig2.update_traces(marker_line_width=1.5)
-                    fig2.update_layout(
-                        height=chart_height,
-                        xaxis_tickangle=-45,
-                        xaxis_title=None,
-                        yaxis_title=None,
-                        margin=dict(l=10, r=10, t=60, b=10),
-                        bargap=0.3,
-                    )
-                    st.plotly_chart(fig2, use_container_width=True)
-
-                # ───── 📊 Graphique 3 : Taux moyen de remplissage ─────
-                avg = (
-                    df_viz.groupby("arr")["fill_rate"]
-                    .mean()
-                    .mul(100)
-                    .reset_index()
-                    .sort_values("fill_rate", ascending=False)
+                fig1.update_traces(marker_line_width=1.5)
+                fig1.update_layout(
+                    height=chart_height,
+                    xaxis_tickangle=-45,
+                    xaxis_title=None,
+                    yaxis_title=None,
+                    margin=dict(l=10, r=10, t=60, b=10),
+                    bargap=0.3,
                 )
+                st.plotly_chart(fig1, use_container_width=True)
 
-                with bt3:
-                    fig3 = px.bar(
-                        avg,
-                        x="arr",
-                        y="fill_rate",
-                        title="Taux moyen de remplissage par arrondissement",
-                        labels={"arr": "Arrondissement", "fill_rate": "% de remplissage moyen"},
-                    )
-                    fig3.update_traces(marker_line_width=1.5)
-                    fig3.update_layout(
-                        height=chart_height,
-                        xaxis_tickangle=-45,
-                        xaxis_title=None,
-                        yaxis_title=None,
-                        margin=dict(l=10, r=10, t=60, b=10),
-                        bargap=0.3,
-                    )
-                    st.plotly_chart(fig3, use_container_width=True)
+            # 2. % Rupture
+            station_counts = df_viz.groupby("arr").size()
+            valid_arrs = station_counts[station_counts >= 3].index
 
+            rupt = (
+                df_viz.assign(rupture=mask_empty)
+                .groupby("arr")["rupture"]
+                .mean()
+                .mul(100)
+                .reset_index()
+            )
+            rupt = rupt[rupt["arr"].isin(valid_arrs)]
+            rupt = rupt[rupt["rupture"] > 0]
+            rupt = rupt.sort_values("rupture", ascending=False)
 
+            with bt2:
+                fig2 = px.bar(
+                    rupt,
+                    x="arr",
+                    y="rupture",
+                    title="Pourcentage de stations en rupture",
+                    labels={"arr": "Arrondissement", "rupture": "% de stations vides"},
+                )
+                fig2.update_traces(marker_line_width=1.5)
+                fig2.update_layout(
+                    height=chart_height,
+                    xaxis_tickangle=-45,
+                    xaxis_title=None,
+                    yaxis_title=None,
+                    margin=dict(l=10, r=10, t=60, b=10),
+                    bargap=0.3,
+                )
+                st.plotly_chart(fig2, use_container_width=True)
 
+            # 3. Taux de remplissage moyen
+            avg = (
+                df_viz.groupby("arr")["fill_rate"]
+                .mean()
+                .mul(100)
+                .reset_index()
+                .sort_values("fill_rate", ascending=False)
+            )
 
-    # ─────────────────────────────────────
-    # BOTTOM ROW : GRAPHIQUES + CARTE
-    # ─────────────────────────────────────
+            with bt3:
+                fig3 = px.bar(
+                    avg,
+                    x="arr",
+                    y="fill_rate",
+                    title="Taux moyen de remplissage par arrondissement",
+                    labels={"arr": "Arrondissement", "fill_rate": "% de remplissage moyen"},
+                )
+                fig3.update_traces(marker_line_width=1.5)
+                fig3.update_layout(
+                    height=chart_height,
+                    xaxis_tickangle=-45,
+                    xaxis_title=None,
+                    yaxis_title=None,
+                    margin=dict(l=10, r=10, t=60, b=10),
+                    bargap=0.3,
+                )
+                st.plotly_chart(fig3, use_container_width=True)
+
+    # BOTTOM : GRAPHIQUES + CARTE
     bot_left, bot_right = st.columns([2, 2], gap="medium")
-
 
     with bot_left:
         with st.container(border=True):
             tab_geo, tab_rebal = st.tabs(["🗺️ Carte des stations", "🔁 Rééquilibrage entre stations"])
 
-            # ▼ Onglet 1 — Carte des stations classiques
+            # ▼ Carte des stations
             with tab_geo:
                 df["R"] = (255 * (1 - df["fill_rate"].fillna(0))).astype(int)
                 df["G"] = (255 * df["fill_rate"].fillna(0)).astype(int)
@@ -1123,23 +1001,18 @@ elif st.session_state.selected == "PILOTAGE":
                         layers=[layer],
                         initial_view_state=view,
                         tooltip={
-                            "text": "{name}\nVélos :{bikes}\nBornes :{docks}\nRempl. :{fill_rate:.0%}",
+                            "text": "{name}\nVélos : {bikes}\nBornes : {docks}\nRempl. : {fill_rate:.0%}",
                         },
                     )
                 )
 
-            # ▼ Onglet 2 — Carte de rééquilibrage avec arcs
-            # ▼ Onglet 2 — Carte de rééquilibrage avec arcs
+            # ▼ Carte de rééquilibrage avec arcs
             with tab_rebal:
                 st.markdown("**Carte de rééquilibrage — flèches vert ➝ rouge**")
 
-                # 1. Stations en tension
                 stations_empty = df[(df["bikes"] == 0) & (~mask_hs)].copy()
-
-                # 2. Stations donneuses
                 stations_donor = df[(df["bikes"] >= 5) & (~mask_hs)].copy()
 
-                # 3. Création des paires
                 pairs_data = []
                 for _, row in stations_empty.iterrows():
                     dists = haversine(row["lat"], row["lon"], stations_donor["lat"], stations_donor["lon"])
@@ -1161,10 +1034,8 @@ elif st.session_state.selected == "PILOTAGE":
                 rebalance_df = pd.DataFrame(pairs_data)
 
                 if not rebalance_df.empty and "weight" in rebalance_df.columns:
-                    # 4. Épaisseur relative des arcs
                     rebalance_df["weight_scaled"] = rebalance_df["weight"].clip(1, 15) / 3
 
-                    # 5. Couches PyDeck
                     arc_layer = pdk.Layer(
                         "ArcLayer",
                         data=rebalance_df,
@@ -1206,40 +1077,31 @@ elif st.session_state.selected == "PILOTAGE":
                             initial_view_state=view,
                             tooltip={
                                 "html": "<b>{name}</b><br/>Vélos : {bikes}<br/>Bornes : {docks}<br/>Rempl. : {fill_rate:.0%}",
-                                "style": {
-                                    "backgroundColor": "white",
-                                    "color": "black",
-                                    "fontSize": "12px"
-                                }
+                                "style": {"backgroundColor": "white", "color": "black", "fontSize": "12px"}
                             },
                         )
                     )
                 else:
                     st.info("Aucune paire de rééquilibrage trouvée pour les arrondissements sélectionnés.")
 
-
     with bot_right:
         st.markdown(
-                f"""
-                <div class="report-card">
-                    <h4>Rapport détaillé</h4>
-                    <p>{report_text}</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            f"""
+            <div class="report-card">
+                <h4>Rapport détaillé</h4>
+                <p>{report_text}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    # ─────────────────────────────────────
-    # PIED DE PAGE
-    # ─────────────────────────────────────
     st.markdown("---")
-    st.caption("© Ville de Paris – Données temps réel. Dashboard Streamlit 2025.")
-
+    st.caption("© Ville de Paris – Données temps réel. Dashboard Streamlit 2025.")
 
 elif st.session_state.selected == "CHATBOT VELIB":
 
     arr_options = sorted(df["arr"].dropna().unique())
-    st.info("Veuillez sélectionner un arrondissement pour activer le chatbot.")
+    st.info("Sélectionne un arrondissement pour activer le chatbot.")
     arr_choice = st.selectbox(
         "",
         options=["— Choisir —"] + arr_options,
@@ -1247,15 +1109,14 @@ elif st.session_state.selected == "CHATBOT VELIB":
     )
 
     if arr_choice == "— Choisir —":
-        
         st.stop()
 
-    # ► 2. (Ré‑)initialisation du contexte si nouvel arrondissement
+    # (Ré-)initialisation du contexte si nouvel arrondissement
     if ("chat_arr" not in st.session_state) or (st.session_state.chat_arr != arr_choice):
         st.session_state.chat_arr = arr_choice
-        st.session_state.chat_history = []          # vidé à chaque changement d’arr.
-        
-        # ── Préparation des données contextuelles ────────────────────────────────
+        st.session_state.chat_history = []  # vidé à chaque changement d’arr.
+
+        # Préparation des données contextuelles
         df_arr = df[df["arr"] == arr_choice].copy()
         df_arr["fill_rate"] = df_arr["bikes"] / df_arr["capacity"].replace({0: np.nan})
         df_arr["situation"] = np.where(
@@ -1264,48 +1125,47 @@ elif st.session_state.selected == "CHATBOT VELIB":
         )
 
         # Résumé arrondissement
-        total_sta   = len(df_arr)
-        bikes_tot   = int(df_arr["bikes"].sum())
-        cap_tot     = int(df_arr["capacity"].sum())
-        fill_avg    = df_arr["fill_rate"].mean()
+        total_sta = len(df_arr)
+        bikes_tot = int(df_arr["bikes"].sum())
+        cap_tot = int(df_arr["capacity"].sum())
+        fill_avg = df_arr["fill_rate"].mean()
 
-        # Détail station : liste exhaustive pour le modèle
+        # Détail station
         station_lines = [
-            f"- {row['name']} : {row['bikes']} vélos dispo / cap. {row['capacity']} "
-            f"({row['fill_rate']:.0%}), situation {row['situation']}"
+            f"- {row['name']} : {row['bikes']} vélos dispo / cap. {row['capacity']} "
+            f"({row['fill_rate']:.0%}), situation {row['situation']}"
             for _, row in df_arr.iterrows()
         ]
 
         st.session_state.system_prompt = f"""
-    Contexte opérationnel – arrondissement *{arr_choice}*.
-    Stations totales : {total_sta}
-    Vélos disponibles : {bikes_tot}/{cap_tot} (taux {fill_avg:.0%})
+Contexte opérationnel – arrondissement *{arr_choice}*.
+Stations totales : {total_sta}
+Vélos disponibles : {bikes_tot}/{cap_tot} (taux {fill_avg:.0%})
 
-    Détails par station :
-    {chr(10).join(station_lines)}
+Détails par station :
+{chr(10).join(station_lines)}
 
-    Règles :
-    1. Réponds uniquement sur les stations de cet arrondissement.
-    2. Si l’utilisateur interroge une station hors périmètre, réponds :
-    "Désolé, cette station n'est pas dans mon périmètre actuel (arrondissement {arr_choice})."
-    3. Apporte des conseils pratiques (où prendre / rendre un vélo) en t’appuyant sur la situation.
-    4. Réponds en français, de façon concise et professionnelle.
-    """
+Règles :
+1. Réponds uniquement sur les stations de cet arrondissement.
+2. Si l’utilisateur interroge une station hors périmètre, réponds :
+"Désolé, cette station n'est pas dans mon périmètre actuel (arrondissement {arr_choice})."
+3. Apporte des conseils pratiques (où prendre / rendre un vélo) en t’appuyant sur la situation.
+4. Réponds en français, de façon concise et professionnelle.
+"""
 
-    # ► 3. Affichage de l’historique de conversation
+    # Affichage de l’historique
     for entry in st.session_state.chat_history:
         with st.chat_message(entry["role"]):
             st.markdown(entry["content"])
 
-    # ► 4. Zone de saisie utilisateur
-    user_input = st.chat_input("Posez votre question sur les stations de l’arrondissement…")
+    # Saisie utilisateur
+    user_input = st.chat_input("Pose ta question sur les stations de l’arrondissement…")
     if user_input:
         st.session_state.chat_history.append({"role": "user", "content": user_input})
-        
-        # Construction du message pour l’API
+
         messages = [{"role": "system", "content": st.session_state.system_prompt}]
         messages.extend(st.session_state.chat_history)
-        
+
         try:
             resp = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
@@ -1315,9 +1175,9 @@ elif st.session_state.selected == "CHATBOT VELIB":
             )
             assistant_reply = resp.choices[0].message["content"].strip()
         except Exception as e:
-            assistant_reply = f"⚠️ Erreur OpenAI : {e}"
-        
+            assistant_reply = f"⚠️ Erreur OpenAI : {e}"
+
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_reply})
-        
+
         with st.chat_message("assistant"):
             st.markdown(assistant_reply)
