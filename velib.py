@@ -194,7 +194,7 @@ with st.sidebar:
 with st.sidebar:
     st.markdown("---")
     st.markdown(
-        '<h6>🌐 Fait par <a href="https://www.linkedin.com/in/daniel-agoundote-delale1117/">✍️ Daniel AGOUNDOTE 👨🏽‍💻</a></h6>',
+        '<h6>🌐 Fait par <a href="https://www.linkedin.com/in/delale1117">✍️ Daniel AGOUNDOTE 👨🏽‍💻</a></h6>',
         unsafe_allow_html=True,)
     st.markdown(
         '<h6>📞+33 0749563509📱</h6>',
