@@ -29,7 +29,13 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 st.markdown(
-    
+    """
+    <style>
+    section.main > div:first-child {padding-top:0.3rem;}
+    div[data-testid="stMetric"] div {justify-content:flex-start;}
+    .dynamic-shadow {
+        transition: box-shadow 0.3s, transform 0.3s;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         border-radius: 10px;
     }
     .dynamic-shadow:hover {
