@@ -174,43 +174,6 @@ def load_data() -> pd.DataFrame:
 
 df = load_data()
 
-if "chrono_start_ts" not in st.session_state:
-    st.session_state.chrono_start_ts = time.time()
-
-
-with st.sidebar:
-    chrono_start_ts = int(st.session_state.chrono_start_ts * 1000)  
-
-    components.html(f"""
-        <div style="font-size:17px;font-weight:bold;margin:10px 0;">
-            <span style="margin-right:8px;">⏱️</span>Chrono en cours :
-            <span id="elapsedTime" style="color:deepskyblue;font-family:monospace;"></span>
-        </div>
-        <script>
-        const start = {chrono_start_ts};
-        function updateElapsedTime() {{
-            const now = Date.now();
-            let elapsed = Math.floor((now - start) / 1000);
-            const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
-            elapsed %= 3600;
-            const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
-            const s = String(elapsed % 60).padStart(2, '0');
-            document.getElementById("elapsedTime").textContent = h + ":" + m + ":" + s;
-        }}
-        setInterval(updateElapsedTime, 1000);
-        updateElapsedTime();
-        </script>
-    """, height=60)
-
-    # Ensuite, ton menu
-    st.session_state.selected = option_menu(
-        'DASHBOARD',
-        ["DONNÉES", "EXPLORATION", "PILOTAGE", "CHATBOT VELIB"],
-        icons=['database', 'search', 'speedometer', 'robot'],
-        menu_icon='cast',
-        default_index=0
-    )
-
 if st.session_state.selected == "DONNÉES":
 
     # ─────────────────────────────────────
