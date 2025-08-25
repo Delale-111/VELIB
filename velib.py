@@ -25,11 +25,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Splash spinner au démarrage ────────────────────────────────────────────────
-if "intro_shown" not in st.session_state:
-    with st.spinner("🖥️ Initialisation… Merci de régler le zoom de votre écran à 100% pour une meilleure visibilité."):
-        time.sleep(5)  # ≈ 5 secondes
-    st.session_state.intro_shown = True
+
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
