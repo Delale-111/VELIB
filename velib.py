@@ -17,27 +17,94 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import networkx as nx
 from pyvis.network import Network
-import time
 
-if "landing_done" not in st.session_state:
-    st.session_state.landing_done = False
 
+# ─────────────────────────────────────
+# CONFIGURATION DE LA PAGE
+# ─────────────────────────────────────
 st.set_page_config(
     page_title="🚲 Vélib' Dashboard — Temps réel",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-
-# ── Splash spinner au démarrage ────────────────────────────────────────────────
+# ─────────────────────────────────────
+# INITIALISATION D'ÉTAT
+# ─────────────────────────────────────
 if "intro_shown" not in st.session_state:
     with st.spinner("🖥️ Initialisation… Merci de régler le zoom de votre écran à 100% pour une meilleure visibilité."):
-        time.sleep(5)  # ≈ 5 secondes
+        time.sleep(5)
     st.session_state.intro_shown = True
+
+if "landing_done" not in st.session_state:
+    st.session_state.landing_done = False
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# ─────────────────────────────────────
+# PAGE D'ACCUEIL (Landing Page)
+# ─────────────────────────────────────
+if not st.session_state.landing_done:
+    st.set_page_config(
+        page_title="🚲 Projet Vélib' — Accueil",
+        layout="wide",
+        initial_sidebar_state="collapsed",
+    )
 
+    # Minuteur 1 minute en haut à droite
+    col_timer, col_title = st.columns([1, 6])
+    with col_timer:
+        timer_placeholder = st.empty()
+    with col_title:
+        st.title("Contexte du projet")
+
+    # Timer (compte à rebours affiché une seule fois)
+    if "timer_start" not in st.session_state:
+        st.session_state.timer_start = time.time()
+
+    elapsed = int(time.time() - st.session_state.timer_start)
+    remaining = max(60 - elapsed, 0)
+    mins, secs = divmod(remaining, 60)
+    timer_placeholder.markdown(f"⏱️ `{mins:02d}:{secs:02d}``")
+
+    # Présentation du projet
+    st.markdown("""
+    Dans le cadre de notre formation, et à la suite de notre premier projet de Data Product Management,  
+    nous poursuivons le travail initié autour des stations Vélib’ de la métropole de Paris.
+
+    Après une première phase d’analyse, nous avons souhaité orienter notre démarche vers une étude prédictive de la disponibilité des vélos.
+
+    Il y a un double objectif :
+
+    - Garantir une disponibilité maximale pour éviter les stations vides  
+    - Éviter la saturation en assurant qu’il reste des places libres pour déposer un vélo
+
+    Pour y répondre, nous avons imaginé la conception et l’entraînement d’un modèle de prédiction basé sur l’intelligence artificielle.
+    """)
+
+    st.divider()
+    st.markdown("### 📘 Sommaire de la présentation")
+
+    # Liste des pages (boutons)
+    page_options = {
+        "Page 1 – Données & Métriques": "DONNÉES",
+        "Page 2 – Analyse exploratoire": "EXPLORATION",
+        "Page 3 – Modèle ML": "PILOTAGE",  # tu pourras remplacer par "MODELE" quand tu ajouteras la page ML
+        "Page 4 – API & Conteneurisation": "CHATBOT VELIB",  # placeholder
+    }
+
+    for label, target in page_options.items():
+        if st.button(label, use_container_width=True):
+            st.session_state.landing_done = True
+            st.session_state.selected = target
+            st.rerun()
+
+    st.stop()  # Empêche le reste du dashboard de se charger tant que la landing est active
+
+
+# ─────────────────────────────────────
+# STYLE GLOBAL DE L'APPLICATION
+# ─────────────────────────────────────
 st.markdown(
     """
     <style>
@@ -70,6 +137,9 @@ st.markdown(
 )
 
 
+# ─────────────────────────────────────
+# FONCTIONS UTILES
+# ─────────────────────────────────────
 def haversine(lat1, lon1, lat2, lon2) -> float:
     """Distance en km entre 2 points lat/lon."""
     R = 6371
@@ -209,70 +279,6 @@ with st.sidebar:
     st.markdown(
         '<h6>📞+33 0749563509📱</h6>',
         unsafe_allow_html=True,)
-
-
-
-if not st.session_state.landing_done:
-    st.set_page_config(
-        page_title="🚲 Projet Vélib' — Accueil",
-        layout="wide",
-        initial_sidebar_state="collapsed",  # cache la sidebar
-    )
-
-    # ► Minuteur 1 min en haut à droite
-    col_timer, col_title = st.columns([1, 6])
-    with col_timer:
-        timer_placeholder = st.empty()
-    with col_title:
-        st.title("Contexte du projet")
-
-    # ► Timer countdown (60s max) — affiché une fois, pas relancé
-    if "timer_start" not in st.session_state:
-        st.session_state.timer_start = time.time()
-
-    elapsed = int(time.time() - st.session_state.timer_start)
-    remaining = max(60 - elapsed, 0)
-    mins, secs = divmod(remaining, 60)
-    timer_placeholder.markdown(f"⏱️ `{mins:02d}:{secs:02d}`")
-
-    # ► CONTEXTE DU PROJET
-    st.markdown("""
-    Dans le cadre de notre formation, et à la suite de notre premier projet de Data Product Management,  
-    nous poursuivons le travail initié autour des stations Vélib’ de la métropole de Paris.
-
-    Après une première phase d’analyse, nous avons souhaité orienter notre démarche vers une étude prédictive de la disponibilité des vélos.
-
-    Il y a un double objectif :
-
-    - Garantir une disponibilité maximale pour éviter les stations vides  
-    - Éviter la saturation en assurant qu’il reste des places libres pour déposer un vélo
-
-    Pour y répondre, nous avons imaginé la conception et l’entraînement d’un modèle de prédiction basé sur l’intelligence artificielle.
-    """)
-
-    st.divider()
-    st.markdown("### 📌 Sommaire de la présentation")
-
-    # ► LISTE DES PAGES + ROUTING
-    page_options = {
-        "Page 1 – Données & Métriques": "DONNÉES",
-        "Page 2 – Analyse exploratoire": "EXPLORATION",
-        "Page 3 – Modèle ML": "MODELE",
-        "Page 4 – API & Conteneurisation": "API",
-        "Page 5 – Microservices & Déploiement": "DEPLOIEMENT",
-        "Page 6 – Prédictions": "PREDICTION",
-        "Page 7 – Monitoring & Maintenance": "MONITORING",
-    }
-
-    for label, target in page_options.items():
-        if st.button(label, use_container_width=True):
-            # Enregistrement de l’état : on passe dans l'app principale
-            st.session_state.landing_done = True
-            st.session_state.selected = target  # Pour démarrer sur la bonne page
-            st.rerun()
-    
-    st.stop() 
-
 
 # ─────────────────────────────────────
 # PAGES
