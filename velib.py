@@ -20,90 +20,18 @@ from pyvis.network import Network
 
 
 # ─────────────────────────────────────
-# CONFIGURATION DE LA PAGE
+# CONFIGURATION GÉNÉRALE
 # ─────────────────────────────────────
 st.set_page_config(
     page_title="🚲 Vélib' Dashboard — Temps réel",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
-
-# ─────────────────────────────────────
-# INITIALISATION D'ÉTAT
-# ─────────────────────────────────────
-if "intro_shown" not in st.session_state:
-    with st.spinner("🖥️ Initialisation… Merci de régler le zoom de votre écran à 100% pour une meilleure visibilité."):
-        time.sleep(5)
-    st.session_state.intro_shown = True
-
-if "landing_done" not in st.session_state:
-    st.session_state.landing_done = False
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # ─────────────────────────────────────
-# PAGE D'ACCUEIL (Landing Page)
-# ─────────────────────────────────────
-if not st.session_state.landing_done:
-    st.set_page_config(
-        page_title="🚲 Projet Vélib' — Accueil",
-        layout="wide",
-        initial_sidebar_state="collapsed",
-    )
-
-    # Minuteur 1 minute en haut à droite
-    col_timer, col_title = st.columns([1, 6])
-    with col_timer:
-        timer_placeholder = st.empty()
-    with col_title:
-        st.title("Contexte du projet")
-
-    # Timer (compte à rebours affiché une seule fois)
-    if "timer_start" not in st.session_state:
-        st.session_state.timer_start = time.time()
-
-    elapsed = int(time.time() - st.session_state.timer_start)
-    remaining = max(60 - elapsed, 0)
-    mins, secs = divmod(remaining, 60)
-    timer_placeholder.markdown(f"⏱️ `{mins:02d}:{secs:02d}``")
-
-    # Présentation du projet
-    st.markdown("""
-    Dans le cadre de notre formation, et à la suite de notre premier projet de Data Product Management,  
-    nous poursuivons le travail initié autour des stations Vélib’ de la métropole de Paris.
-
-    Après une première phase d’analyse, nous avons souhaité orienter notre démarche vers une étude prédictive de la disponibilité des vélos.
-
-    Il y a un double objectif :
-
-    - Garantir une disponibilité maximale pour éviter les stations vides  
-    - Éviter la saturation en assurant qu’il reste des places libres pour déposer un vélo
-
-    Pour y répondre, nous avons imaginé la conception et l’entraînement d’un modèle de prédiction basé sur l’intelligence artificielle.
-    """)
-
-    st.divider()
-    st.markdown("### 📘 Sommaire de la présentation")
-
-    # Liste des pages (boutons)
-    page_options = {
-        "Page 1 – Données & Métriques": "DONNÉES",
-        "Page 2 – Analyse exploratoire": "EXPLORATION",
-        "Page 3 – Modèle ML": "PILOTAGE",  # tu pourras remplacer par "MODELE" quand tu ajouteras la page ML
-        "Page 4 – API & Conteneurisation": "CHATBOT VELIB",  # placeholder
-    }
-
-    for label, target in page_options.items():
-        if st.button(label, use_container_width=True):
-            st.session_state.landing_done = True
-            st.session_state.selected = target
-            st.rerun()
-
-    st.stop()  # Empêche le reste du dashboard de se charger tant que la landing est active
-
-
-# ─────────────────────────────────────
-# STYLE GLOBAL DE L'APPLICATION
+# STYLES
 # ─────────────────────────────────────
 st.markdown(
     """
@@ -138,7 +66,7 @@ st.markdown(
 
 
 # ─────────────────────────────────────
-# FONCTIONS UTILES
+# OUTILS & FONCTIONS
 # ─────────────────────────────────────
 def haversine(lat1, lon1, lat2, lon2) -> float:
     """Distance en km entre 2 points lat/lon."""
@@ -150,44 +78,30 @@ def haversine(lat1, lon1, lat2, lon2) -> float:
 
 
 def find_rebalance_pairs(df: pd.DataFrame, max_pairs: int = 5) -> list[tuple]:
-    """
-    Pour chaque station vide, je trouve la station la plus proche
-    avec ≥ 5 vélos disponibles. Je renvoie max_pairs suggestions.
-    """
     need = df[df["bikes"] == 0].copy()
     supply = df[df["bikes"] >= 5].copy()
     pairs = []
     for _, row in need.sort_values("capacity", ascending=False).head(max_pairs).iterrows():
         dists = haversine(row["lat"], row["lon"], supply["lat"], supply["lon"])
-        if dists.empty:
-            continue
         idx_min = dists.idxmin()
         donor = supply.loc[idx_min]
-        pairs.append(
-            {
-                "dest_name": row["name"],
-                "dest_arr": row["arr"],
-                "donor_name": donor["name"],
-                "donor_bikes": int(donor["bikes"]),
-                "distance_km": round(float(dists[idx_min]), 2),
-            }
-        )
+        pairs.append({
+            "dest_name": row["name"],
+            "dest_arr": row["arr"],
+            "donor_name": donor["name"],
+            "donor_bikes": int(donor["bikes"]),
+            "distance_km": round(float(dists[idx_min]), 2),
+        })
         supply = supply.drop(idx_min)
     return pairs
 
 
 def generate_report(summary_dict: dict, pairs: list[dict]) -> str:
-    """
-    Appel OpenAI : je produis une synthèse opérationnelle
-    + conseils (≤ 120 mots).
-    """
     now = datetime.utcnow().strftime("%d/%m/%Y %H:%M UTC")
     pairs_txt = "\n".join(
-        [
-            f"- {p['donor_name']} ({p['donor_bikes']} vélos, {p['distance_km']} km) → {p['dest_name']}"
-            for p in pairs
-        ]
-    ) or "Aucune suggestion de ré-équilibrage (réseau stable)."
+        [f"- {p['donor_name']} ({p['donor_bikes']} vélos, {p['distance_km']} km) → {p['dest_name']}" for p in pairs]
+    ) or "Aucune suggestion de ré‑équilibrage (réseau stable)."
+
     prompt = f"""
     Contexte : réseau Vélib' temps réel le {now}.
     Indicateurs :
@@ -238,47 +152,97 @@ def load_data() -> pd.DataFrame:
     for rec in r.json()["records"]:
         f = rec["fields"]
         lat, lon = f.get("coordonnees_geo", [None, None])
-        recs.append(
-            {
-                "code": f.get("stationcode"),
-                "name": f.get("name"),
-                "arr": f.get("nom_arrondissement_communes"),
-                "capacity": f.get("capacity", 0),
-                "bikes": f.get("numbikesavailable", 0),
-                "docks": f.get("numdocksavailable", 0),
-                "lat": lat,
-                "lon": lon,
-                "installed": str(f.get("is_installed")).lower() in {"1", "true", "yes", "oui"},
-                "renting": str(f.get("is_renting")).lower() in {"1", "true", "yes", "oui"},
-                "returning": str(f.get("is_returning")).lower() in {"1", "true", "yes", "oui"},
-            }
-        )
+        recs.append({
+            "code": f.get("stationcode"),
+            "name": f.get("name"),
+            "arr": f.get("nom_arrondissement_communes"),
+            "capacity": f.get("capacity", 0),
+            "bikes": f.get("numbikesavailable", 0),
+            "docks": f.get("numdocksavailable", 0),
+            "lat": lat,
+            "lon": lon,
+            "installed": str(f.get("is_installed")).lower() in {"1", "true", "yes", "oui"},
+            "renting": str(f.get("is_renting")).lower() in {"1", "true", "yes", "oui"},
+            "returning": str(f.get("is_returning")).lower() in {"1", "true", "yes", "oui"},
+        })
     df = pd.DataFrame(recs)
     df["fill_rate"] = df["bikes"] / df["capacity"].replace({0: np.nan})
     return df.dropna(subset=["lat", "lon"])
 
 df = load_data()
 
+if "chrono_start_ts" not in st.session_state:
+    st.session_state.chrono_start_ts = time.time()
+
+
 # ─────────────────────────────────────
-# SIDEBAR (sans minuteur)
+# SIDEBAR + NAVIGATION
 # ─────────────────────────────────────
 with st.sidebar:
+    chrono_start_ts = int(st.session_state.chrono_start_ts * 1000)
+
+    components.html(f"""
+        <div style="font-size:17px;font-weight:bold;margin:10px 0;">
+            <span style="margin-right:8px;">⏱️</span>Chrono en cours :
+            <span id="elapsedTime" style="color:deepskyblue;font-family:monospace;"></span>
+        </div>
+        <script>
+        const start = {chrono_start_ts};
+        function updateElapsedTime() {{
+            const now = Date.now();
+            let elapsed = Math.floor((now - start) / 1000);
+            const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+            elapsed %= 3600;
+            const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+            const s = String(elapsed % 60).padStart(2, '0');
+            document.getElementById("elapsedTime").textContent = h + ":" + m + ":" + s;
+        }}
+        setInterval(updateElapsedTime, 1000);
+        updateElapsedTime();
+        </script>
+    """, height=60)
+
+    # MENU DE NAVIGATION
     st.session_state.selected = option_menu(
         'DASHBOARD',
-        ["DONNÉES", "EXPLORATION", "PILOTAGE", "CHATBOT VELIB"],
-        icons=['database', 'search', 'speedometer', 'robot'],
+        ["INTRODUCTION", "DONNÉES", "EXPLORATION", "PILOTAGE", "CHATBOT VELIB"],
+        icons=['info-circle', 'database', 'search', 'speedometer', 'robot'],
         menu_icon='cast',
         default_index=0
     )
 
-with st.sidebar:
-    st.markdown("---")
-    st.markdown(
-        '<h6>🌐 Fait par <a href="https://www.linkedin.com/in/delale1117">✍️ Daniel AGOUNDOTE 👨🏽‍💻</a></h6>',
-        unsafe_allow_html=True,)
-    st.markdown(
-        '<h6>📞+33 0749563509📱</h6>',
-        unsafe_allow_html=True,)
+# ─────────────────────────────────────
+# INTERFACE : PAGE INTRODUCTION
+# ─────────────────────────────────────
+if st.session_state.selected == "INTRODUCTION":
+    st.title("Contexte du projet")
+
+    st.markdown("""
+    Dans le cadre de notre formation, et à la suite de notre premier projet de Data Product Management,  
+    nous poursuivons le travail initié autour des stations Vélib’ de la métropole de Paris.
+
+    Après une première phase d’analyse, nous avons souhaité orienter notre démarche vers une étude prédictive de la disponibilité des vélos.
+
+    Il y a un double objectif :
+
+    - Garantir une disponibilité maximale pour éviter les stations vides  
+    - Éviter la saturation en assurant qu’il reste des places libres pour déposer un vélo
+
+    Pour y répondre, nous avons imaginé la conception et l’entraînement d’un modèle de prédiction basé sur l’intelligence artificielle.
+    """)
+
+    st.divider()
+    st.markdown("### 📘 Sommaire des étapes du projet")
+
+    st.markdown("""
+    - Page 1 — Données & Métriques  
+    - Page 2 — Analyse exploratoire  
+    - Page 3 — Modèle ML & Évaluation  
+    - Page 4 — API & Conteneurisation  
+    - Page 5 — Microservices & Déploiement  
+    - Page 6 — Prédictions  
+    - Page 7 — Monitoring & Maintenance
+    """)
 
 # ─────────────────────────────────────
 # PAGES
