@@ -19,6 +19,7 @@ import networkx as nx
 from pyvis.network import Network
 from pathlib import Path
 import os, sys, time, subprocess
+from graphviz import Digraph
 
 
 st.set_page_config(
@@ -485,40 +486,6 @@ elif st.session_state.selected in ["DONNÉES", "ANALYSE", "MODELES ET EVALUATION
 
 if st.session_state.selected == "DONNÉES":
 
-    st.markdown(
-        """
-        <style>
-        section.main > div:first-child {padding-top:0.3rem;}
-        div[data-testid="stMetric"] div {justify-content:flex-start;}
-        .dynamic-shadow {
-            transition: box-shadow 0.3s, transform 0.3s;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 10px;
-        }
-        .dynamic-shadow:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0,0,255,0.3);
-        }
-        .report-card {
-            background: linear-gradient(135deg,#6e8efb,#a777e3);
-            padding: 20px;
-            border-radius: 10px;
-            color: white;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .report-card:hover {
-            box-shadow: 0 8px 16px rgba(0,0,255,0.3);
-        }
-        </style>
-        <link rel="stylesheet"
-              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-if st.session_state.selected == "DONNÉES":
-
     st.markdown("""
     <style>
     .section-title {
@@ -647,33 +614,42 @@ if st.session_state.selected == "DONNÉES":
 
     st.markdown('<div class="section-title">⚙️ PIPELINE D\'EXTRACTION</div>', unsafe_allow_html=True)
 
-    workflow_col1, workflow_col2, workflow_col3, workflow_col4, workflow_col5 = st.columns([1, 1, 1, 1, 1])
+    # Graphviz workflow professionnel - CORRECTION ICI
+    def create_extraction_pipeline():
+        dot = Digraph("pipeline", format="svg", engine="dot")
+        dot.attr(rankdir="LR", splines="ortho", nodesep="0.8", ranksep="1.2",
+                bgcolor="transparent", fontname="Inter,Helvetica,Arial")
+        
+        # Styles
+        service_style = dict(shape="box", style="rounded,filled", fontsize="10",
+                           fontname="Inter,Helvetica,Arial", penwidth="2")
+        
+        # Nodes
+        dot.node("1", "Velib API Client", fillcolor="#2196F3", fontcolor="white", **service_style)
+        dot.node("2", "Response preprocessing\nand validation", fillcolor="#4CAF50", fontcolor="white", **service_style)
+        dot.node("3", "Create Velib availability\ndatabase structure", fillcolor="#FF9800", fontcolor="white", **service_style)
+        dot.node("4", "Create and update\nVelib availability database", fillcolor="#9C27B0", fontcolor="white", **service_style)
+        dot.node("5", "Scheduler and API request\nevery 15 minutes", fillcolor="#F44336", fontcolor="white", **service_style)
+        dot.node("DB", "Velib availability DB", fillcolor="#4CAF50", fontcolor="white", 
+                shape="cylinder", style="filled", penwidth="2")
+        
+        # Edges - CORRECTION: une seule définition de color par edge
+        dot.edge("1", "2", color="#667eea", fontsize="9", fontname="Inter,Helvetica,Arial",
+                arrowsize="0.8", penwidth="2")
+        dot.edge("2", "3", color="#667eea", fontsize="9", fontname="Inter,Helvetica,Arial",
+                arrowsize="0.8", penwidth="2")
+        dot.edge("3", "4", color="#667eea", fontsize="9", fontname="Inter,Helvetica,Arial",
+                arrowsize="0.8", penwidth="2")
+        dot.edge("4", "5", color="#667eea", fontsize="9", fontname="Inter,Helvetica,Arial",
+                arrowsize="0.8", penwidth="2")
+        dot.edge("5", "DB", color="#667eea", fontsize="9", fontname="Inter,Helvetica,Arial",
+                arrowsize="0.8", penwidth="2")
+        dot.edge("5", "1", label="Loop", style="dashed", color="#FF5722", fontsize="9",
+                fontname="Inter,Helvetica,Arial", arrowsize="0.8", penwidth="2")
+        
+        return dot
     
-    with workflow_col1:
-        st.markdown('<div class="workflow-number">1</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-box">Velib API Client</div>', unsafe_allow_html=True)
-    
-    with workflow_col2:
-        st.markdown('<div class="workflow-arrow">→</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-number">2</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-box">Response preprocessing and validation</div>', unsafe_allow_html=True)
-    
-    with workflow_col3:
-        st.markdown('<div class="workflow-arrow">→</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-number">3</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-box">Create Velib availability database structure</div>', unsafe_allow_html=True)
-    
-    with workflow_col4:
-        st.markdown('<div class="workflow-arrow">→</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-number">4</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-box">Create and update Velib availability database</div>', unsafe_allow_html=True)
-    
-    with workflow_col5:
-        st.markdown('<div class="workflow-arrow">→</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-number">5</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-box">Scheduler and API request every 15 minutes</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-arrow">↓</div>', unsafe_allow_html=True)
-        st.markdown('<div class="workflow-box" style="background: #e8f5e9; border-color: #4caf50;">Velib availability DB</div>', unsafe_allow_html=True)
+    st.graphviz_chart(create_extraction_pipeline(), use_container_width=True)
 
     st.markdown("### 🔄 Étapes du Pipeline")
     
@@ -802,74 +778,59 @@ if st.session_state.selected == "DONNÉES":
     with gen_col2:
         st.markdown("### 🔀 Workflow de Traitement")
         
-        st.markdown("""
-        <div style="margin-top: 2rem;">
-            <div class="workflow-box" style="background: #e3f2fd; border-color: #2196f3;">
-                run_pipeline
-            </div>
-            <div class="workflow-arrow">↓</div>
-            <div style="display: flex; gap: 1rem; margin: 1rem 0;">
-                <div style="flex: 1;">
-                    <div class="workflow-box" style="font-size: 0.9rem;">
-                        load_data_from_db
-                    </div>
-                </div>
-                <div style="flex: 1;">
-                    <div class="workflow-box" style="font-size: 0.9rem;">
-                        transform_to_tidy_with_resample
-                    </div>
-                </div>
-                <div style="flex: 1;">
-                    <div class="workflow-box" style="font-size: 0.9rem;">
-                        resample
-                    </div>
-                </div>
-            </div>
-            <div class="workflow-arrow">↓</div>
-            <div style="display: flex; gap: 1rem; margin: 1rem 0;">
-                <div style="flex: 1;">
-                    <div class="workflow-box" style="font-size: 0.9rem;">
-                        create_time_complete_df
-                    </div>
-                </div>
-                <div style="flex: 1;">
-                    <div class="workflow-box" style="font-size: 0.9rem;">
-                        format_columns
-                    </div>
-                </div>
-            </div>
-            <div class="workflow-arrow">↓</div>
-            <div style="display: flex; gap: 1rem; margin: 1rem 0;">
-                <div style="flex: 1;">
-                    <div class="workflow-box" style="font-size: 0.9rem;">
-                        remove_complete_nan_df
-                    </div>
-                </div>
-                <div style="flex: 1;">
-                    <div class="workflow-box" style="font-size: 0.9rem;">
-                        drop_parsed_NaN_series
-                    </div>
-                </div>
-            </div>
-            <div class="workflow-arrow">↓</div>
-            <div style="display: flex; gap: 1rem; margin: 1rem 0;">
-                <div style="flex: 1;">
-                    <div class="workflow-box" style="font-size: 0.9rem;">
-                        compute_split_ratio
-                    </div>
-                </div>
-                <div style="flex: 1;">
-                    <div class="workflow-box" style="font-size: 0.9rem;">
-                        split_and_check_NaN_percent
-                    </div>
-                </div>
-            </div>
-            <div class="workflow-arrow">↓</div>
-            <div class="workflow-box" style="background: #e8f5e9; border-color: #4caf50;">
-                Dataset Train & Test
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        def create_generation_workflow():
+            dot = Digraph("generation", format="svg", engine="dot")
+            dot.attr(rankdir="TB", splines="ortho", nodesep="0.6", ranksep="0.8",
+                    bgcolor="transparent", fontname="Inter,Helvetica,Arial")
+            
+            service_style = dict(shape="box", style="rounded,filled", fontsize="9",
+                               fontname="Inter,Helvetica,Arial", penwidth="1.5")
+            
+            # Main process
+            dot.node("START", "run_pipeline", fillcolor="#2196F3", fontcolor="white", **service_style)
+            
+            # First level
+            dot.node("LOAD", "load_data_from_db", fillcolor="#4CAF50", fontcolor="white", **service_style)
+            dot.node("TRANSFORM", "transform_to_tidy\n_with_resample", fillcolor="#4CAF50", fontcolor="white", **service_style)
+            dot.node("RESAMPLE", "resample", fillcolor="#4CAF50", fontcolor="white", **service_style)
+            
+            # Second level
+            dot.node("TIME", "create_time\n_complete_df", fillcolor="#FF9800", fontcolor="white", **service_style)
+            dot.node("FORMAT", "format_columns", fillcolor="#FF9800", fontcolor="white", **service_style)
+            
+            # Third level
+            dot.node("REMOVE", "remove_complete\n_nan_df", fillcolor="#9C27B0", fontcolor="white", **service_style)
+            dot.node("DROP", "drop_parsed\n_NaN_series", fillcolor="#9C27B0", fontcolor="white", **service_style)
+            
+            # Fourth level
+            dot.node("COMPUTE", "compute_split_ratio", fillcolor="#F44336", fontcolor="white", **service_style)
+            dot.node("SPLIT", "split_and_check\n_NaN_percent", fillcolor="#F44336", fontcolor="white", **service_style)
+            
+            # Final
+            dot.node("END", "Dataset Train & Test", fillcolor="#4CAF50", fontcolor="white",
+                    shape="box3d", style="filled", penwidth="2")
+            
+            # Edges - CORRECTION: attributs séparés
+            dot.edge("START", "LOAD", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            dot.edge("START", "TRANSFORM", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            dot.edge("START", "RESAMPLE", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            
+            dot.edge("LOAD", "TIME", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            dot.edge("TRANSFORM", "TIME", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            dot.edge("RESAMPLE", "FORMAT", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            
+            dot.edge("TIME", "REMOVE", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            dot.edge("FORMAT", "DROP", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            
+            dot.edge("REMOVE", "COMPUTE", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            dot.edge("DROP", "SPLIT", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            
+            dot.edge("COMPUTE", "END", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            dot.edge("SPLIT", "END", color="#667eea", arrowsize="0.7", penwidth="1.5")
+            
+            return dot
+        
+        st.graphviz_chart(create_generation_workflow(), use_container_width=True)
         
         st.markdown("""
         <div class="info-card" style="margin-top: 1rem;">
@@ -1016,6 +977,9 @@ if st.session_state.selected == "DONNÉES":
 
         components.html(open(html_path, "r", encoding="utf-8").read(), height=550)
         os.remove(html_path)
+    
+    st.markdown("---")
+    st.caption("📊 Data Engineering & Pipeline — Projet Vélib' 2025")
 
 
 elif st.session_state.selected == "ANALYSE":
