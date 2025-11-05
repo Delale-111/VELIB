@@ -11,3 +11,4 @@ seaborn==0.13.0
 networkx==3.2.1
 pyvis==0.3.2
 Digraph
+graphviz
