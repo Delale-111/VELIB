@@ -17,6 +17,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import networkx as nx
 from pyvis.network import Network
+from pathlib import Path
+import os, sys, time, subprocess
 
 
 st.set_page_config(
@@ -175,7 +177,7 @@ with st.sidebar:
 
     components.html(f"""
         <div style="font-size:17px;font-weight:bold;margin:10px 0;">
-            <span style="margin-right:8px;">⏱️</span>Chrono en cours :
+            <span style="margin-right:8px;">⏱️</span>
             <span id="elapsedTime" style="color:deepskyblue;font-family:monospace;"></span>
         </div>
         <script>
@@ -195,9 +197,9 @@ with st.sidebar:
     """, height=60)
 
     st.session_state.selected = option_menu(
-        'DASHBOARD',
+        'PRESENTATION',
         ["SOMMAIRE", "DONNÉES", "ANALYSE", "MODELES ET EVALUATION", "ARCHITECTURE", "PREDICTIONS", "MONITORING & MAINTENANCE"],
-        icons=['house', 'database', 'speedometer', 'cpu'],
+        icons=['house', 'database', 'bar-chart', 'cpu', 'diagram-3', 'graph-up', 'tools'],
         menu_icon='cast',
         default_index=0
     )
@@ -1425,9 +1427,6 @@ elif st.session_state.selected == "ANALYSE":
     st.markdown("---")
     st.caption("© Ville de Paris – Données temps réel. Dashboard Streamlit 2025.")
 
-
-
-
 elif st.session_state.selected == "MODELES ET EVALUATION":
     
     st.markdown("""
@@ -1600,6 +1599,36 @@ elif st.session_state.selected == "MODELES ET EVALUATION":
         font-size: 1rem;
         line-height: 1.8;
         margin: 1rem 0;
+    }
+    
+    .conclusion-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-left: 4px solid #667eea;
+    }
+    
+    .conclusion-title {
+        color: #667eea;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 0 0 1rem 0;
+    }
+    
+    .conclusion-content {
+        color: #4a5568;
+        line-height: 1.8;
+    }
+    
+    .improvement-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .improvement-item:last-child {
+        border-bottom: none;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -2054,35 +2083,1603 @@ elif st.session_state.selected == "MODELES ET EVALUATION":
     st.markdown("""
     <div class="section-box">
         <div class="section-title">✅ Conclusions & Recommandations</div>
-        <div class="workflow-box">
-            <div style="background:white; border-radius:10px; padding:1.5rem; margin:1rem 0;">
-                <h4 style="color:#667eea; margin:0 0 1rem 0;">🏆 Modèles Retenus</h4>
-                <div style="color:#4a5568; line-height:1.8;">
-                    <strong>1. LightGBM Quantile (Médiane)</strong><br>
-                    • Meilleur compromis performance/vitesse<br>
-                    • Intervalles de prédiction fiables<br>
-                    • Temps d'entraînement optimal<br><br>
-                    
-                    <strong>2. XGBoost Classique</strong><br>
-                    • Meilleure MAE absolue (2.57)<br>
-                    • Prédictions robustes et stables<br>
-                    • Alternative crédible
-                </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("### 🏆 Modèles Retenus")
+    
+    col_concl1, col_concl2 = st.columns(2)
+    
+    with col_concl1:
+        st.markdown("""
+        <div class="conclusion-card">
+            <div class="conclusion-title">1. LightGBM Quantile (Médiane)</div>
+            <div class="conclusion-content">
+                • Meilleur compromis performance/vitesse<br>
+                • Intervalles de prédiction fiables<br>
+                • Temps d'entraînement optimal
             </div>
-            
-            <div style="background:white; border-radius:10px; padding:1.5rem; margin:1rem 0;">
-                <h4 style="color:#667eea; margin:0 0 1rem 0;">📋 Axes d'Amélioration</h4>
-                <div style="color:#4a5568; line-height:1.8;">
-                    • Intégration complète des variables météo dans le pipeline optimisé<br>
-                    • Analyse des stations à forte erreur de prédiction<br>
-                    • Tests avec périodes de lags supérieures (2-7 jours)<br>
-                    • Enrichissement des features calendaires (événements spéciaux)<br>
-                    • Modélisation différenciée par type de station (résidentielle, professionnelle)
-                </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_concl2:
+        st.markdown("""
+        <div class="conclusion-card">
+            <div class="conclusion-title">2. XGBoost Classique</div>
+            <div class="conclusion-content">
+                • Meilleure MAE absolue (2.57)<br>
+                • Prédictions robustes et stables<br>
+                • Alternative crédible
             </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    st.markdown("### 📋 Axes d'Amélioration")
+    
+    improvements = [
+        "Intégration complète des variables météo dans le pipeline optimisé",
+        "Analyse des stations à forte erreur de prédiction",
+        "Tests avec périodes de lags supérieures (2-7 jours)",
+        "Enrichissement des features calendaires (événements spéciaux)",
+        "Modélisation différenciée par type de station (résidentielle, professionnelle)"
+    ]
+    
+    for i, improvement in enumerate(improvements, 1):
+        st.markdown(f"""
+        <div class="improvement-item">
+            <strong style="color:#667eea;">{i}.</strong> {improvement}
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.caption("🤖 Modélisation & Évaluation — Projet Vélib' 2025")
+
+elif st.session_state.selected == "ARCHITECTURE":
+    
+    st.markdown("""
+    <style>
+    div[data-testid="stMarkdownContainer"] > div:first-child {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <style>
+    .arch-scope .architecture-page {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+
+    .arch-scope .architecture-header {
+        text-align: center;
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .arch-scope .architecture-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .arch-scope .section-box {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-left: 5px solid #667eea;
+    }
+
+    .arch-scope .section-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .arch-scope .info-card {
+        background: linear-gradient(135deg, #667eea15, #764ba215);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 4px solid #667eea;
+    }
+
+    .arch-scope .service-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 0.3rem;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .arch-scope .port-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-left: 3px solid #667eea;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="arch-scope">
+        <div class="architecture-header">
+            <h1>🏗️ ARCHITECTURE &amp; DÉPLOIEMENT</h1>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
+
+    tab_global, tab_predictions, tab_drift, tab_services = st.tabs([
+        "🌐 Architecture Globale", 
+        "👤 Flux Prédictions", 
+        "📊 Monitoring Drift", 
+        "⚙️ Services & Ports"
+    ])
+
+    with tab_global:
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🌐 Vue d\'ensemble du système</div>', unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="info-card">
+        <p style="margin:0; line-height:1.8; color:#4a5568;">
+        L'architecture du système Vélib' est basée sur une <strong>infrastructure Docker conteneurisée</strong> 
+        orchestrée via <strong>Docker Compose</strong>. Elle intègre des services de prédiction (BentoML), 
+        d'interface utilisateur (Streamlit), et de monitoring (Prometheus + Grafana) communiquant via 
+        un réseau privé <code>velib2_network</code>.
+        </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        from graphviz import Digraph
+        
+        def create_global_architecture():
+            dot = Digraph("architecture", format="svg", engine="dot")
+            dot.attr(rankdir="TB", splines="ortho", nodesep="0.8", ranksep="1.2", 
+                    bgcolor="transparent", fontname="Inter,Helvetica,Arial")
+            
+            docker_style = dict(shape="box3d", style="filled", fillcolor="#2496ED", 
+                              fontcolor="white", fontsize="11", fontname="Inter,Helvetica,Arial",
+                              penwidth="2")
+            service_style = dict(shape="box", style="rounded,filled", fontsize="10",
+                               fontname="Inter,Helvetica,Arial", penwidth="1.5")
+            external_style = dict(shape="oval", style="filled", fillcolor="#FFA500",
+                                fontcolor="white", fontsize="10", fontname="Inter,Helvetica,Arial")
+            
+            with dot.subgraph(name="cluster_docker") as docker:
+                docker.attr(label="Docker Network: velib2_network", style="filled,rounded",
+                          fillcolor="#E8F4F8", color="#2496ED", penwidth="3", fontsize="13",
+                          fontname="Inter,Helvetica,Arial", labeljust="l")
+                
+                with docker.subgraph(name="cluster_main") as main:
+                    main.attr(label="Services Principaux", style="filled,rounded",
+                            fillcolor="#D1E7F7", color="#667eea", penwidth="2", fontsize="11")
+                    main.node("API", "API Inference\n:3000\nBentoML", 
+                            fillcolor="#4CAF50", **service_style)
+                    main.node("STREAMLIT", "Streamlit UI\n:8080\nInterface Web",
+                            fillcolor="#2196F3", **service_style)
+                
+                with docker.subgraph(name="cluster_monitor") as monitor:
+                    monitor.attr(label="Monitoring", style="filled,rounded",
+                               fillcolor="#FFE8D1", color="#FF9800", penwidth="2", fontsize="11")
+                    monitor.node("MONITOR", "Monitoring Service\n:9100-9103\nPrometheus Exporters",
+                               fillcolor="#FF9800", **service_style)
+                    monitor.node("DRIFT_REAL", "Drift Monitor Réel\n:9101\nsimple_drift_monitor",
+                               fillcolor="#9C27B0", **service_style)
+                    monitor.node("DRIFT_SIM", "Drift Simulator\n:9103\nScenarios",
+                               fillcolor="#F44336", **service_style)
+                
+                with docker.subgraph(name="cluster_obs") as obs:
+                    obs.attr(label="Observability", style="filled,rounded",
+                           fillcolor="#FFD1E8", color="#E91E63", penwidth="2", fontsize="11")
+                    obs.node("PROMETHEUS", "Prometheus\n:9090\nTime Series DB",
+                           fillcolor="#E91E63", **service_style)
+                    obs.node("GRAFANA", "Grafana\n:3001\nDashboards",
+                           fillcolor="#FF5722", **service_style)
+            
+            dot.node("USER", "👤 Utilisateur", **external_style)
+            dot.node("DATA", "📊 Dataset\nvelib_availability_train.parquet", **external_style)
+            
+            edge_style = dict(color="#2A63D4", fontsize="9", fontname="Inter,Helvetica,Arial",
+                            arrowsize="0.8", penwidth="1.8")
+            
+            dot.edge("USER", "STREAMLIT", label="HTTP", **edge_style)
+            dot.edge("USER", "GRAFANA", label="HTTP", **edge_style)
+            dot.edge("STREAMLIT", "API", label="API Calls\nJWT Auth", **edge_style)
+            dot.edge("STREAMLIT", "MONITOR", label="Command File\n/tmp/commands", 
+                    style="dashed", **edge_style)
+            
+            dot.edge("API", "MONITOR", label="Metrics\n/metrics", **edge_style)
+            dot.edge("DRIFT_REAL", "API", label="API Calls\nPredictions", **edge_style)
+            dot.edge("DRIFT_REAL", "MONITOR", label="Metrics\n:9101", **edge_style)
+            dot.edge("DRIFT_SIM", "MONITOR", label="Metrics\n:9103", **edge_style)
+            
+            dot.edge("MONITOR", "PROMETHEUS", label="Exports Metrics", **edge_style)
+            dot.edge("PROMETHEUS", "GRAFANA", label="Queries\nPromQL", **edge_style)
+            
+            dot.edge("API", "DATA", label="Reads", style="dashed", **edge_style)
+            
+            return dot
+        
+        st.graphviz_chart(create_global_architecture(), use_container_width=True)
+        
+        st.markdown("""
+        <div class="info-card">
+        <h4 style="color:#667eea; margin-top:0;">🔑 Points Clés</h4>
+        <ul style="line-height:1.8; color:#4a5568;">
+            <li><strong>Isolation réseau :</strong> Tous les services communiquent via le réseau Docker privé</li>
+            <li><strong>Authentification JWT :</strong> Sécurisation des appels API depuis Streamlit</li>
+            <li><strong>Monitoring temps réel :</strong> Métriques exposées via Prometheus et visualisées dans Grafana</li>
+            <li><strong>Détection de drift :</strong> Service dédié simulant des requêtes et calculant les dérives</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with tab_predictions:
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">👤 Flux de données - Prédictions Utilisateur</div>', unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="info-card">
+        <p style="margin:0; line-height:1.8; color:#4a5568;">
+        Ce diagramme séquentiel illustre le parcours d'une requête de prédiction depuis l'interface 
+        utilisateur jusqu'à l'affichage des résultats, en passant par l'authentification et le monitoring.
+        </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        def create_prediction_flow():
+            dot = Digraph("predictions", format="svg", engine="dot")
+            dot.attr(rankdir="LR", splines="polyline", nodesep="1.5", ranksep="2",
+                    bgcolor="transparent", fontname="Inter,Helvetica,Arial")
+            
+            participants = [
+                ("USER", "Utilisateur", "#FFA500"),
+                ("STREAM", "Streamlit", "#2196F3"),
+                ("API", "API Inference", "#4CAF50"),
+                ("PROM", "Prometheus", "#E91E63"),
+                ("GRAF", "Grafana", "#FF5722")
+            ]
+            
+            for key, label, color in participants:
+                dot.node(key, label, shape="box", style="filled,rounded", fillcolor=color,
+                        fontcolor="white", fontsize="11", penwidth="2",
+                        fontname="Inter,Helvetica,Arial", width="1.5", height="0.8")
+            
+            messages = [
+                ("USER", "STREAM", "Page 2: Prédictions"),
+                ("STREAM", "API", "POST /login\n(credentials)"),
+                ("API", "STREAM", "JWT Token"),
+                ("STREAM", "API", "POST /xgboost/predict\n(stations: [10003,10004])"),
+                ("API", "API", "Prédictions calculées"),
+                ("API", "PROM", "Incrémente\nvelib_api_requests_by_station_total"),
+                ("API", "STREAM", "Résultats (DataFrame)"),
+                ("STREAM", "USER", "Affiche graphiques"),
+                ("PROM", "GRAF", "Dashboard affiche\nrequêtes par station")
+            ]
+            
+            edge_style = dict(color="#2A63D4", fontsize="9", fontname="Inter,Helvetica,Arial",
+                            arrowsize="0.8", penwidth="1.6")
+            
+            for src, dst, label in messages:
+                if src == dst:
+                    dot.edge(src, dst, label=label, style="dashed", **edge_style)
+                else:
+                    dot.edge(src, dst, label=label, **edge_style)
+            
+            return dot
+        
+        st.graphviz_chart(create_prediction_flow(), use_container_width=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            <div class="info-card">
+            <h4 style="color:#667eea; margin-top:0;">📝 Étapes du Flux</h4>
+            <ol style="line-height:2; color:#4a5568;">
+                <li>L'utilisateur accède à la page Prédictions</li>
+                <li>Streamlit demande un token JWT à l'API</li>
+                <li>L'API retourne le token d'authentification</li>
+                <li>Requête de prédiction avec le token</li>
+                <li>Calcul des prédictions par le modèle</li>
+                <li>Enregistrement des métriques dans Prometheus</li>
+                <li>Retour des résultats à Streamlit</li>
+                <li>Affichage des graphiques à l'utilisateur</li>
+            </ol>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div class="info-card">
+            <h4 style="color:#667eea; margin-top:0;">🔒 Sécurité & Monitoring</h4>
+            <p style="line-height:1.8; color:#4a5568;">
+            <strong>Authentification :</strong> JWT avec credentials (admin/password)<br>
+            <strong>Métriques trackées :</strong><br>
+            • Nombre de requêtes par station<br>
+            • Temps de réponse<br>
+            • Nombre de prédictions générées<br><br>
+            <strong>Visualisation :</strong> Grafana affiche les dashboards en temps réel
+            </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with tab_drift:
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📊 Flux de données - Monitoring Drift Réel</div>', unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="info-card">
+        <p style="margin:0; line-height:1.8; color:#4a5568;">
+        Le service de monitoring de drift effectue des requêtes régulières à l'API pour détecter 
+        les dérives dans les prédictions du modèle. Il calcule une baseline et compare les nouvelles 
+        prédictions pour identifier des anomalies.
+        </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        def create_drift_flow():
+            dot = Digraph("drift", format="svg", engine="dot")
+            dot.attr(rankdir="LR", splines="ortho", nodesep="1.2", ranksep="1.5",
+                    bgcolor="transparent", fontname="Inter,Helvetica,Arial")
+            
+            participants = [
+                ("DRIFT", "Drift Monitor Réel\n(simple_drift_monitor)", "#9C27B0"),
+                ("API", "API Inference", "#4CAF50"),
+                ("PROM", "Prometheus", "#E91E63"),
+                ("GRAF", "Grafana", "#FF5722")
+            ]
+            
+            for key, label, color in participants:
+                dot.node(key, label, shape="box", style="filled,rounded", fillcolor=color,
+                        fontcolor="white", fontsize="10", penwidth="2",
+                        fontname="Inter,Helvetica,Arial", width="1.8", height="1")
+            
+            dot.node("LOOP", "⟳ Toutes les 60 secondes", shape="ellipse", style="filled",
+                    fillcolor="#FFF3CD", fontcolor="#856404", fontsize="9",
+                    penwidth="1.5", fontname="Inter,Helvetica,Arial")
+            
+            edge_style = dict(fontsize="9", fontname="Inter,Helvetica,Arial",
+                            arrowsize="0.8", penwidth="1.6")
+            
+            dot.edge("LOOP", "DRIFT", color="#856404", style="dashed", **edge_style)
+            dot.edge("DRIFT", "API", label="POST /xgboost/predict\n(stations: 10003,10004,10005)",
+                    color="#2A63D4", **edge_style)
+            dot.edge("API", "DRIFT", label="Predictions (valeurs)", color="#4CAF50", **edge_style)
+            dot.edge("DRIFT", "DRIFT", label="Calcule baseline\n(moyenne, écart-type)",
+                    color="#9C27B0", style="dashed", **edge_style)
+            dot.edge("DRIFT", "DRIFT", label="Compare avec baseline\n→ Calcul drift score",
+                    color="#F44336", style="dashed", **edge_style)
+            dot.edge("DRIFT", "PROM", label="Expose metrics\nvelib_drift_score\nvelib_model_performance",
+                    color="#E91E63", **edge_style)
+            dot.edge("PROM", "GRAF", label="Dashboard Réel\nAffiche métriques",
+                    color="#FF5722", **edge_style)
+            dot.edge("DRIFT", "LOOP", label="Répéter", color="#856404", style="dashed", **edge_style)
+            
+            return dot
+        
+        st.graphviz_chart(create_drift_flow(), use_container_width=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            <div class="info-card">
+            <h4 style="color:#667eea; margin-top:0;">🔄 Cycle de Monitoring</h4>
+            <ol style="line-height:2; color:#4a5568;">
+                <li><strong>Requête périodique</strong> (60s) vers l'API</li>
+                <li><strong>Récupération</strong> des prédictions actuelles</li>
+                <li><strong>Calcul de la baseline</strong> (μ, σ)</li>
+                <li><strong>Comparaison</strong> avec la baseline</li>
+                <li><strong>Calcul du drift score</strong></li>
+                <li><strong>Exposition</strong> des métriques</li>
+                <li><strong>Visualisation</strong> dans Grafana</li>
+            </ol>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div class="info-card">
+            <h4 style="color:#667eea; margin-top:0;">📈 Métriques Exposées</h4>
+            <p style="line-height:1.8; color:#4a5568;">
+            <strong>velib_drift_score</strong><br>
+            Score de dérive calculé en comparant les nouvelles prédictions à la baseline établie<br><br>
+            <strong>velib_model_performance</strong><br>
+            Métriques de performance du modèle (MAE, RMSE, etc.)<br><br>
+            <strong>Seuil d'alerte :</strong> Si drift_score > 0.2, une alerte est déclenchée dans Grafana
+            </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with tab_services:
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">⚙️ Services et Configuration des Ports</div>', unsafe_allow_html=True)
+        
+        services_data = {
+            "Service": [
+                "API Inference",
+                "Streamlit UI",
+                "Prometheus",
+                "Grafana",
+                "Monitor Exporter",
+                "Drift Monitor Réel",
+                "Drift Simulator"
+            ],
+            "Port": [
+                "3000",
+                "8080",
+                "9090",
+                "3001",
+                "9100",
+                "9101",
+                "9103"
+            ],
+            "Description": [
+                "API BentoML pour prédictions (XGBoost/LightGBM)",
+                "Interface utilisateur web",
+                "Base de données de séries temporelles",
+                "Dashboards de monitoring",
+                "Métriques système",
+                "Métriques de drift production",
+                "Métriques de drift simulées"
+            ],
+            "Technologie": [
+                "BentoML + FastAPI",
+                "Streamlit",
+                "Prometheus",
+                "Grafana",
+                "Python + Prometheus Client",
+                "Python + Prometheus Client",
+                "Python + Prometheus Client"
+            ]
+        }
+        
+        df_services = pd.DataFrame(services_data)
+        
+        st.dataframe(
+            df_services,
+            column_config={
+                "Service": st.column_config.TextColumn("Service", width="medium"),
+                "Port": st.column_config.NumberColumn("Port", format="%d", width="small"),
+                "Description": st.column_config.TextColumn("Description", width="large"),
+                "Technologie": st.column_config.TextColumn("Technologie", width="medium"),
+            },
+            hide_index=True,
+            use_container_width=True
+        )
+        
+        st.markdown("### 🔗 URLs d'accès")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("""
+            <div class="port-info">
+            <strong style="color:#667eea;">🖥️ Interfaces Web</strong><br>
+            <code>http://localhost:8080</code> - Streamlit<br>
+            <code>http://localhost:3001</code> - Grafana<br>
+            <code>http://localhost:9090</code> - Prometheus
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div class="port-info">
+            <strong style="color:#667eea;">🔌 API & Endpoints</strong><br>
+            <code>http://localhost:3000</code> - API Inference<br>
+            <code>http://localhost:3000/docs</code> - Swagger<br>
+            <code>http://localhost:3000/metrics</code> - Métriques
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("""
+            <div class="port-info">
+            <strong style="color:#667eea;">📊 Monitoring</strong><br>
+            <code>http://localhost:9100/metrics</code> - Monitor<br>
+            <code>http://localhost:9101/metrics</code> - Drift Réel<br>
+            <code>http://localhost:9103/metrics</code> - Drift Sim
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("### 🐳 Configuration Docker Compose")
+        
+        st.markdown("""
+        <div class="info-card">
+        <h4 style="color:#667eea; margin-top:0;">📋 Fichier docker-compose.yml</h4>
+        <p style="line-height:1.8; color:#4a5568;">
+        Tous les services sont définis dans le fichier <code>docker-compose.yml</code> et communiquent 
+        via le réseau Docker <code>velib2_network</code>. Les volumes persistants sont utilisés pour :
+        </p>
+        <ul style="line-height:1.8; color:#4a5568;">
+            <li><strong>Prometheus :</strong> Stockage des séries temporelles</li>
+            <li><strong>Grafana :</strong> Configuration et dashboards</li>
+            <li><strong>API :</strong> Modèles ML et données d'inférence</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.code("""
+docker-compose up -d
+docker-compose ps
+docker-compose logs -f [service_name]
+docker-compose down
+        """, language="bash")
+        
+        st.markdown("### 📚 Documentation Complémentaire")
+        
+        col_doc1, col_doc2 = st.columns(2)
+        
+        with col_doc1:
+            st.markdown("""
+            <div class="info-card">
+            <h4 style="color:#667eea; margin-top:0;">📖 Guides Disponibles</h4>
+            <ul style="line-height:1.8; color:#4a5568;">
+                <li><strong>INSTALLATION.md</strong> - Installation complète</li>
+                <li><strong>GRAFANA_GUIDE.md</strong> - Configuration Grafana</li>
+                <li><strong>ARCHITECTURE.md</strong> - Architecture détaillée</li>
+            </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_doc2:
+            st.markdown("""
+            <div class="info-card">
+            <h4 style="color:#667eea; margin-top:0;">🔧 Guides Techniques</h4>
+            <ul style="line-height:1.8; color:#4a5568;">
+                <li><strong>SIMULATE_DRIFT.md</strong> - Simulation de drift</li>
+                <li><strong>DRIFT_REPORTS.md</strong> - Rapports de monitoring</li>
+                <li><strong>GENERATE_VALUES.md</strong> - Génération de données</li>
+            </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
     st.markdown("---")
-    st.caption("🤖 Modélisation & Évaluation — Projet Vélib' 2025")
+    st.caption("🏗️ Architecture & Orchestration — Projet Vélib' 2025")
+
+elif st.session_state.selected == "PREDICTIONS":
+    
+    st.markdown("""
+    <style>
+    .predictions-page {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    .predictions-header {
+        text-align: center;
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .predictions-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .auth-box {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-left: 5px solid #667eea;
+    }
+    
+    .config-box {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .station-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        margin: 0.3rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .station-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .quick-select-btn {
+        background: white;
+        border: 2px solid #667eea;
+        color: #667eea;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        margin: 0.3rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-select-btn:hover {
+        background: #667eea;
+        color: white;
+    }
+    
+    .info-panel {
+        background: linear-gradient(135deg, #667eea15, #764ba215);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 4px solid #667eea;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="predictions-header">
+        <h1>🔮 PRÉDICTIONS INTERACTIVES</h1>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if 'auth_token' not in st.session_state:
+        st.session_state.auth_token = None
+    if 'selected_stations' not in st.session_state:
+        st.session_state.selected_stations = "10003,10004,10005"
+
+    API_URL = os.environ.get("API_BASE_URL", "http://inference:3000")
+
+    with st.expander("🔐 Authentification", expanded=not st.session_state.auth_token):
+        col_user, col_pass = st.columns(2)
+        
+        with col_user:
+            username = st.text_input("Nom d'utilisateur", value="admin", key="username")
+        
+        with col_pass:
+            password = st.text_input("Mot de passe", type="password", value="password", key="password")
+        
+        if st.button("Se connecter", type="primary"):
+            try:
+                response = requests.post(
+                    f"{API_URL}/login",
+                    json={"credentials": {"username": username, "password": password}},
+                    headers={"Content-Type": "application/json"},
+                    timeout=10
+                )
+                response.raise_for_status()
+                token_data = response.json()
+                st.session_state.auth_token = token_data.get("access_token")
+                st.success("✅ Connexion réussie !")
+                st.rerun()
+            except requests.exceptions.RequestException as e:
+                st.error(f"❌ Erreur de connexion : {e}")
+                if hasattr(e, 'response') and e.response is not None:
+                    st.error(f"Détails : {e.response.text}")
+
+    if st.session_state.auth_token:
+        st.success("🔓 Connecté à l'API")
+        if st.button("Se déconnecter"):
+            st.session_state.auth_token = None
+            st.rerun()
+    else:
+        st.warning("⚠️ Veuillez vous connecter pour faire des prédictions")
+
+    if not st.session_state.auth_token:
+        st.info("💡 Veuillez vous connecter ci-dessus pour utiliser les prédictions")
+        st.stop()
+
+    st.markdown('<div class="config-box">', unsafe_allow_html=True)
+    st.markdown("### 📊 Configuration de la Prédiction")
+
+    col_model, col_stations = st.columns([1, 2])
+
+    with col_model:
+        model_choice = st.radio(
+            "Modèle à utiliser :",
+            ["XGBoost", "LightGBM"],
+            help="Choisissez entre XGBoost ou LightGBM"
+        )
+
+    with col_stations:
+        stations_input = st.text_input(
+            "Codes de stations (séparés par des virgules)",
+            value=st.session_state.selected_stations,
+            help="Exemple: 10003,10004,10005",
+            placeholder="10003,10004,10005",
+            key="stations_text_input"
+        )
+        if stations_input != st.session_state.selected_stations:
+            st.session_state.selected_stations = stations_input
+
+    st.markdown("**🚀 Sélections Rapides :**")
+    col1, col2, col3, col4 = st.columns(4)
+
+    quick_selections = {
+        "1 station": "10003",
+        "3 stations": "10003,10004,10005",
+        "5 stations": "10003,10004,10005,10006,10008",
+        "10 stations": "10003,10004,10005,10006,10008,10009,10010,10011,10012,10014"
+    }
+
+    for idx, (col, (label, stations)) in enumerate(zip([col1, col2, col3, col4], quick_selections.items())):
+        with col:
+            if st.button(f"📍 {label}", key=f"quick_{idx}", use_container_width=True):
+                st.session_state.selected_stations = stations
+                st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if st.button("🚀 Lancer la Prédiction", type="primary", use_container_width=True):
+        if not stations_input:
+            st.error("❌ Veuillez entrer au moins une station")
+        else:
+            stations = [s.strip() for s in stations_input.split(",") if s.strip()]
+            
+            if not stations:
+                st.error("❌ Aucune station valide détectée")
+            else:
+                endpoint = "xgboost" if model_choice == "XGBoost" else "lgbm"
+                
+                with st.spinner(f"⏳ Prédiction en cours avec {model_choice}..."):
+                    try:
+                        headers = {
+                            "Authorization": f"Bearer {st.session_state.auth_token}",
+                            "Content-Type": "application/json"
+                        }
+                        
+                        response = requests.post(
+                            f"{API_URL}/{endpoint}/predict",
+                            json={"levels": stations},
+                            headers=headers,
+                            timeout=30
+                        )
+                        response.raise_for_status()
+                        
+                        result = pd.DataFrame(response.json())
+                        
+                        st.success(f"✅ Prédiction réussie ! ({len(result)} prédictions)")
+                        st.markdown("---")
+                        
+                        st.markdown("### 📈 Statistiques par Station")
+                        stats = result.groupby('level')['pred'].agg(['count', 'mean', 'min', 'max', 'std']).round(2)
+                        stats.columns = ['Nb Prédictions', 'Moyenne', 'Minimum', 'Maximum', 'Écart-type']
+                        st.dataframe(stats, use_container_width=True)
+                        
+                        st.markdown("### 📊 Visualisations")
+                        
+                        col_chart1, col_chart2 = st.columns(2)
+                        
+                        with col_chart1:
+                            st.markdown("**📈 Moyenne par Station (Line Chart)**")
+                            chart_data = result.groupby('level')['pred'].mean().reset_index()
+                            chart_data = chart_data.set_index('level')
+                            st.line_chart(chart_data)
+                        
+                        with col_chart2:
+                            st.markdown("**📊 Moyenne par Station (Bar Chart)**")
+                            st.bar_chart(chart_data)
+                        
+                        with st.expander("📋 Voir Toutes les Prédictions", expanded=False):
+                            st.dataframe(result, use_container_width=True)
+                        
+                        csv = result.to_csv(index=False)
+                        st.download_button(
+                            label="📥 Télécharger les Résultats (CSV)",
+                            data=csv,
+                            file_name=f"predictions_{endpoint}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            mime="text/csv"
+                        )
+                        
+                    except requests.exceptions.RequestException as e:
+                        st.error(f"❌ Erreur lors de la prédiction : {e}")
+                        if hasattr(e, 'response') and e.response is not None:
+                            try:
+                                error_detail = e.response.json()
+                                st.error(f"Détails : {error_detail}")
+                            except:
+                                st.error(f"Détails : {e.response.text}")
+                    except Exception as e:
+                        st.error(f"❌ Erreur inattendue : {e}")
+
+    st.divider()
+    st.markdown("### 🚴 Stations Disponibles")
+
+    popular_stations = {
+        "Zone 10xxx": ["10003", "10004", "10005", "10006", "10008", "10009", "10010", "10011"],
+        "Zone 11xxx": ["11001", "11002", "11003", "11004", "11006", "11007", "11010", "11016"],
+        "Zone 12xxx": ["12002", "12005", "12006", "12007", "12008", "12009", "12011", "12013"],
+        "Zone 13xxx": ["13001", "13002", "13005", "13006", "13007", "13008", "13009", "13010"],
+    }
+
+    col_z1, col_z2, col_z3, col_z4 = st.columns(4)
+
+    for col, (zone, stations) in zip([col_z1, col_z2, col_z3, col_z4], popular_stations.items()):
+        with col:
+            st.markdown(f"**{zone}**")
+            for station in stations:
+                if st.button(f"🚲 {station}", key=f"station_{station}", use_container_width=True):
+                    current = st.session_state.selected_stations
+                    stations_list = [s.strip() for s in current.split(',') if s.strip()]
+                    
+                    if station not in stations_list:
+                        stations_list.append(station)
+                        st.session_state.selected_stations = ','.join(stations_list)
+                        st.rerun()
+
+    col_info1, col_info2 = st.columns([3, 1])
+    with col_info1:
+        st.info("💡 **Total : 1280 stations** disponibles dans le dataset")
+    with col_info2:
+        if st.button("🗑️ Effacer la Sélection", use_container_width=True):
+            st.session_state.selected_stations = ""
+            st.rerun()
+
+    st.divider()
+    with st.expander("ℹ️ Informations sur l'API", expanded=False):
+        st.markdown(f"""
+        **Configuration :**
+        - URL API : {API_URL}
+        - Modèles disponibles : XGBoost, LightGBM
+        - Horizon de prédiction : 48 heures
+        
+        **Endpoints :**
+        - `/login` : Authentification
+        - `/xgboost/predict` : Prédictions XGBoost
+        - `/lgbm/predict` : Prédictions LightGBM
+        
+        **Format des Données :**
+        - Input : Liste de codes de stations (ex: ["10003", "10004"])
+        - Output : DataFrame avec colonnes `level` et `pred`
+        
+        **Authentification :**
+        - Type : JWT Bearer Token
+        - Durée de validité : Session
+        """)
+
+    st.markdown("---")
+    st.caption("🔮 Prédictions Interactives — Projet Vélib' 2025")
+
+elif st.session_state.selected == "MONITORING & MAINTENANCE":
+    
+    st.markdown("""
+    <style>
+    div[data-testid="stMarkdownContainer"] > div:first-child {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <style>
+    .monitoring-scope .monitoring-page {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    .monitoring-scope .monitoring-header {
+        text-align: center;
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .monitoring-scope .monitoring-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .monitoring-scope .section-box {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-left: 5px solid #667eea;
+    }
+    
+    .monitoring-scope .section-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+    
+    .monitoring-scope .info-card {
+        background: linear-gradient(135deg, #667eea15, #764ba215);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 4px solid #667eea;
+    }
+    
+    .monitoring-scope .scenario-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-left: 4px solid #667eea;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .monitoring-scope .scenario-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+    }
+    
+    .monitoring-scope .metric-box {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .monitoring-scope .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+    }
+    
+    .monitoring-scope .metric-label {
+        font-size: 0.9rem;
+        opacity: 0.95;
+    }
+    
+    .monitoring-scope .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    
+    .monitoring-scope .status-success {
+        background: #4CAF50;
+        box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+    }
+    
+    .monitoring-scope .status-warning {
+        background: #FF9800;
+        box-shadow: 0 0 8px rgba(255, 152, 0, 0.6);
+    }
+    
+    .monitoring-scope .status-error {
+        background: #F44336;
+        box-shadow: 0 0 8px rgba(244, 67, 54, 0.6);
+    }
+    
+    .monitoring-scope .process-step {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        margin: 0.5rem 0;
+        border-left: 3px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .monitoring-scope .step-number {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    
+    .monitoring-scope .command-box {
+        background: #2d3748;
+        color: #f7fafc;
+        padding: 1rem;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+        overflow-x: auto;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="monitoring-scope">
+        <div class="monitoring-header">
+            <h1>🔧 MONITORING & MAINTENANCE</h1>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    tab_retraining, tab_drift_control = st.tabs([
+        "🔄 Réentraînement des Modèles",
+        "🎛️ Contrôle du Simulateur de Drift"
+    ])
+    
+    with tab_retraining:
+        st.markdown('<div class="monitoring-scope">', unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="info-card">
+        <p style="margin:0; line-height:1.8; color:#4a5568;">
+        Cette section vous permet de lancer le réentraînement des modèles de prédiction Velib2.
+        Vous pouvez choisir entre <strong>XGBoost</strong> et <strong>LightGBM</strong>, et suivre 
+        la progression du processus en temps réel.
+        </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if 'training_status' not in st.session_state:
+            st.session_state.training_status = None
+        if 'training_output' not in st.session_state:
+            st.session_state.training_output = ""
+        if 'training_start_time' not in st.session_state:
+            st.session_state.training_start_time = None
+        if 'training_progress' not in st.session_state:
+            st.session_state.training_progress = 0
+        
+        project_root = Path(__file__).parent.parent.parent.parent.parent.parent
+        
+        if not (project_root / "Makefile").exists() and not (project_root / "pyproject.toml").exists():
+            project_root = project_root.parent
+            if not ((project_root / "Makefile").exists() or (project_root / "pyproject.toml").exists()):
+                project_root = Path(__file__).parent.parent.parent.parent.parent.parent
+        
+        training_script = project_root / "src" / "velib2_t" / "training" / "ml" / "train_and_eval.py"
+        
+        st.markdown('<div class="section-title">🎯 Sélection du modèle</div>', unsafe_allow_html=True)
+        
+        col_model1, col_model2 = st.columns(2)
+        
+        with col_model1:
+            st.markdown("""
+            <div class="scenario-card">
+                <h3 style="color:#667eea; margin-top:0;">XGBoost</h3>
+                <ul style="line-height:1.8; color:#4a5568;">
+                    <li>Modèle de gradient boosting</li>
+                    <li>Performance élevée sur les séries temporelles</li>
+                    <li>Temps d'entraînement : ~30-60 minutes</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_model2:
+            st.markdown("""
+            <div class="scenario-card">
+                <h3 style="color:#764ba2; margin-top:0;">LightGBM</h3>
+                <ul style="line-height:1.8; color:#4a5568;">
+                    <li>Modèle de gradient boosting optimisé</li>
+                    <li>Entraînement rapide</li>
+                    <li>Temps d'entraînement : ~20-40 minutes</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        model_choice = st.radio(
+            "Modèle à réentraîner :",
+            ["XGBoost", "LightGBM"],
+            horizontal=True,
+            help="Choisissez le modèle que vous souhaitez réentraîner"
+        )
+        
+        script_exists = training_script.exists()
+        if not script_exists:
+            st.error(f"⚠️ Script d'entraînement introuvable : {training_script}")
+            st.info(f"💡 Vérifiez que le chemin du projet est correct : {project_root}")
+        else:
+            st.success(f"✅ Script d'entraînement trouvé : {training_script}")
+        
+        with st.expander("⚙️ Configuration avancée", expanded=False):
+            col_config1, col_config2 = st.columns(2)
+            
+            with col_config1:
+                run_name = st.text_input(
+                    "Nom du run MLflow",
+                    value=f"retraining_{model_choice.lower()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                    help="Nom qui sera utilisé pour identifier ce run dans MLflow"
+                )
+            
+            with col_config2:
+                auto_register = st.checkbox(
+                    "Enregistrer automatiquement dans MLflow",
+                    value=True,
+                    help="Si activé, le modèle sera enregistré dans le registre MLflow après l'entraînement"
+                )
+            
+            st.markdown(f"**Chemin du projet :** `{project_root}`")
+            st.markdown(f"**Script d'entraînement :** `{training_script}`")
+        
+        def launch_training(model_type: str, run_name: str):
+            try:
+                if model_type.lower() == "xgboost":
+                    cmd = [
+                        sys.executable,
+                        str(training_script),
+                        "--xgboost",
+                        "--run_name",
+                        run_name
+                    ]
+                else:
+                    cmd = [
+                        sys.executable,
+                        str(training_script),
+                        "--lgbm",
+                        "--run_name",
+                        run_name
+                    ]
+                
+                if not training_script.exists():
+                    return {
+                        "success": False,
+                        "error": f"Script d'entraînement introuvable : {training_script}"
+                    }
+                
+                st.session_state.training_start_time = datetime.now()
+                st.session_state.training_status = "running"
+                st.session_state.training_output = ""
+                
+                try:
+                    result = subprocess.run(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        timeout=3600,
+                        cwd=str(project_root)
+                    )
+                    
+                    output = result.stdout if result.stdout else ""
+                    st.session_state.training_output = output
+                    
+                    if result.returncode == 0:
+                        return {
+                            "success": True,
+                            "output": output,
+                            "model_type": model_type,
+                            "run_name": run_name
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"Erreur lors de l'entraînement (code {result.returncode})",
+                            "output": output
+                        }
+                except subprocess.TimeoutExpired:
+                    return {
+                        "success": False,
+                        "error": "Le réentraînement a dépassé la limite de temps (1 heure)"
+                    }
+                    
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": str(e)
+                }
+        
+        col_btn1, col_btn2, col_btn3 = st.columns([2, 1, 1])
+        
+        with col_btn1:
+            if st.button(
+                f"🚀 Lancer le réentraînement {model_choice}",
+                type="primary",
+                use_container_width=True,
+                disabled=(st.session_state.training_status == "running" or not script_exists)
+            ):
+                st.warning("⏱️ Le réentraînement peut prendre 30 à 60 minutes. Veuillez patienter...")
+                
+                if not script_exists:
+                    st.error("❌ Impossible de lancer le réentraînement : script introuvable")
+                else:
+                    result = launch_training(model_choice.lower(), run_name)
+                    
+                    if result["success"]:
+                        st.session_state.training_status = "completed"
+                        st.success(f"✅ Réentraînement {model_choice} terminé avec succès !")
+                        
+                        if auto_register:
+                            st.info("💡 Le modèle est enregistré dans MLflow. Utilisez la page de déploiement pour le mettre en production.")
+                    else:
+                        st.session_state.training_status = "failed"
+                        st.error(f"❌ Erreur lors du réentraînement : {result.get('error', 'Erreur inconnue')}")
+                
+                st.rerun()
+        
+        with col_btn2:
+            if st.button("🔄 Réinitialiser", use_container_width=True):
+                st.session_state.training_status = None
+                st.session_state.training_output = ""
+                st.session_state.training_start_time = None
+                st.session_state.training_progress = 0
+                st.rerun()
+        
+        if st.session_state.training_status:
+            st.markdown("---")
+            st.markdown('<div class="section-title">📊 Statut du réentraînement</div>', unsafe_allow_html=True)
+            
+            col_status1, col_status2, col_status3 = st.columns(3)
+            
+            with col_status1:
+                if st.session_state.training_status == "running":
+                    st.markdown("""
+                    <div class="metric-box">
+                        <div class="metric-label">Statut</div>
+                        <div class="metric-value">🔄 En cours</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif st.session_state.training_status == "completed":
+                    st.markdown("""
+                    <div class="metric-box" style="background: linear-gradient(135deg, #4CAF50, #66BB6A);">
+                        <div class="metric-label">Statut</div>
+                        <div class="metric-value">✅ Terminé</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif st.session_state.training_status == "failed":
+                    st.markdown("""
+                    <div class="metric-box" style="background: linear-gradient(135deg, #F44336, #E57373);">
+                        <div class="metric-label">Statut</div>
+                        <div class="metric-value">❌ Échec</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            with col_status2:
+                if st.session_state.training_start_time:
+                    elapsed = datetime.now() - st.session_state.training_start_time
+                    minutes = elapsed.seconds // 60
+                    seconds = elapsed.seconds % 60
+                    st.markdown(f"""
+                    <div class="metric-box">
+                        <div class="metric-label">Temps écoulé</div>
+                        <div class="metric-value">{minutes} min {seconds} s</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            with col_status3:
+                if st.session_state.training_status == "running":
+                    st.progress(0.5)
+                elif st.session_state.training_status == "completed":
+                    st.progress(1.0)
+                else:
+                    st.progress(0.0)
+            
+            if st.session_state.training_output:
+                st.markdown('<div class="section-title">📝 Sortie du processus</div>', unsafe_allow_html=True)
+                with st.expander("Voir les logs détaillés", expanded=True):
+                    st.code(st.session_state.training_output, language=None)
+        
+        st.markdown("---")
+        st.markdown('<div class="section-title">ℹ️ Processus de réentraînement</div>', unsafe_allow_html=True)
+        
+        col_info1, col_info2 = st.columns(2)
+        
+        with col_info1:
+            st.markdown("""
+            <div class="info-card">
+            <h4 style="color:#667eea; margin-top:0;">Étapes principales</h4>
+            <div class="process-step">
+                <div class="step-number">1</div>
+                <div>📊 Chargement des données d'entraînement</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">2</div>
+                <div>🔍 Optimisation des hyperparamètres (Bayesian Search)</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">3</div>
+                <div>🎯 Entraînement du modèle avec les meilleurs paramètres</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">4</div>
+                <div>📈 Évaluation sur le jeu de test</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">5</div>
+                <div>💾 Enregistrement dans MLflow</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">6</div>
+                <div>🏷️ Ajout des métriques et tags</div>
+            </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_info2:
+            st.markdown("""
+            <div class="info-card">
+            <h4 style="color:#667eea; margin-top:0;">Après le réentraînement</h4>
+            <p style="line-height:1.8; color:#4a5568;">
+            • Le modèle est enregistré dans MLflow<br>
+            • Vous pouvez le visualiser dans l'UI MLflow<br>
+            • Pour le déployer, utilisez les scripts de déploiement<br>
+            • Les métriques sont disponibles dans MLflow
+            </p>
+            <h4 style="color:#667eea; margin-top:1.5rem;">Commandes utiles</h4>
+            <div class="command-box">
+make train_xgb     # Entraîner XGBoost<br>
+make train_lgbm    # Entraîner LightGBM<br>
+make register_xgb  # Enregistrer XGBoost<br>
+make register_lgbm # Enregistrer LightGBM
+            </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        st.markdown('<div class="section-title">📊 MLflow</div>', unsafe_allow_html=True)
+        
+        col_mlflow1, col_mlflow2 = st.columns(2)
+        
+        with col_mlflow1:
+            mlflow_url = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
+            st.markdown(f"""
+            <div class="info-card">
+            <h4 style="color:#667eea; margin-top:0;">Interface MLflow</h4>
+            <p style="line-height:1.8; color:#4a5568;">
+            <strong>URL :</strong> <a href="{mlflow_url}" target="_blank">{mlflow_url}</a><br><br>
+            • Visualisez les runs et métriques<br>
+            • Comparez les performances des modèles<br>
+            • Gérez le registre de modèles
+            </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_mlflow2:
+            if st.button("🔗 Ouvrir MLflow UI", use_container_width=True):
+                st.markdown(f"""
+                <div class="info-card">
+                <p style="margin:0; text-align:center;">
+                <a href="{mlflow_url}" target="_blank" style="color:#667eea; font-weight:600;">
+                Ouvrir dans un nouvel onglet →
+                </a>
+                </p>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with tab_drift_control:
+        st.markdown('<div class="monitoring-scope">', unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="info-card">
+        <p style="margin:0; line-height:1.8; color:#4a5568;">
+        Cette section vous permet de contrôler le <strong>simulateur de drift</strong> et de changer 
+        les scénarios de dérive. Les changements prendront effet dans les <strong>5 secondes</strong> 
+        et les métriques seront mises à jour toutes les minutes.
+        </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        scenarios = {
+            "normal": {
+                "name": "Normal",
+                "description": "Pas de dérive - Système stable",
+                "color": "🟢",
+                "drift_score_range": "0.0 - 0.2",
+                "performance": "90-95%",
+                "gradient": "linear-gradient(135deg, #4CAF50, #66BB6A)"
+            },
+            "gradual": {
+                "name": "Gradual Drift",
+                "description": "Dérive progressive - Détection moyenne",
+                "color": "🟡",
+                "drift_score_range": "0.2 - 0.5",
+                "performance": "83-90%",
+                "gradient": "linear-gradient(135deg, #FFC107, #FFD54F)"
+            },
+            "sudden": {
+                "name": "Sudden Drift",
+                "description": "Changement brusque - Détection élevée",
+                "color": "🟠",
+                "drift_score_range": "0.6 - 0.9",
+                "performance": "73-85%",
+                "gradient": "linear-gradient(135deg, #FF9800, #FFB74D)"
+            },
+            "seasonal": {
+                "name": "Seasonal Drift",
+                "description": "Variation saisonnière - Détection moyenne",
+                "color": "🟣",
+                "drift_score_range": "0.3 - 0.6",
+                "performance": "78-90%",
+                "gradient": "linear-gradient(135deg, #9C27B0, #BA68C8)"
+            },
+            "extreme": {
+                "name": "Extreme Drift",
+                "description": "Dérive importante - Détection critique",
+                "color": "🔴",
+                "drift_score_range": "0.8 - 1.0",
+                "performance": "63-75%",
+                "gradient": "linear-gradient(135deg, #F44336, #E57373)"
+            }
+        }
+        
+        col_scenarios, col_control = st.columns([2, 1])
+        
+        with col_scenarios:
+            st.markdown('<div class="section-title">📊 Scénarios disponibles</div>', unsafe_allow_html=True)
+            
+            for key, info in scenarios.items():
+                with st.expander(f"{info['color']} **{info['name']}** - {info['description']}", expanded=False):
+                    st.markdown(f"""
+                    <div style="background:{info['gradient']}; color:white; padding:1rem; border-radius:8px;">
+                    <strong>Score de dérive :</strong> {info['drift_score_range']}<br>
+                    <strong>Performance modèle :</strong> {info['performance']}
+                    </div>
+                    """, unsafe_allow_html=True)
+        
+        with col_control:
+            st.markdown('<div class="section-title">🎯 Sélection rapide</div>', unsafe_allow_html=True)
+            
+            def activate_scenario(scenario_key):
+                try:
+                    command_file = Path("/tmp/commands/drift_command.txt")
+                    command_file.parent.mkdir(parents=True, exist_ok=True)
+                    command_file.write_text(scenario_key)
+                    st.success(f"✅ **{scenarios[scenario_key]['name']}** activé !")
+                    st.info("⏱️ Changement dans ~5 secondes")
+                    time.sleep(1)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Erreur : {e}")
+            
+            for key, info in scenarios.items():
+                if st.button(
+                    f"{info['color']} {info['name']}",
+                    key=f"btn_{key}",
+                    use_container_width=True
+                ):
+                    activate_scenario(key)
+        
+        st.markdown("---")
+        st.markdown('<div class="section-title">📡 Statut du simulateur</div>', unsafe_allow_html=True)
+        
+        col_status1, col_status2, col_status3 = st.columns(3)
+        
+        with col_status1:
+            st.markdown("""
+            <div class="metric-box">
+                <div class="metric-label">Fréquence de rafraîchissement</div>
+                <div class="metric-value">1 min</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_status2:
+            st.markdown("""
+            <div class="metric-box">
+                <div class="metric-label">Temps de réponse</div>
+                <div class="metric-value">~5 sec</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_status3:
+            st.markdown("""
+            <div class="metric-box">
+                <div class="metric-label">Source</div>
+                <div class="metric-value">Drift Simulator</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        st.markdown('<div class="section-title">📊 Visualisation</div>', unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="info-card">
+        <h4 style="color:#667eea; margin-top:0;">Consultez les métriques en temps réel dans Grafana</h4>
+        <p style="line-height:1.8; color:#4a5568;">
+        <strong>URL :</strong> <a href="http://localhost:3001" target="_blank">http://localhost:3001</a><br><br>
+        <strong>Dashboards disponibles :</strong><br>
+        • <strong>Velib MLOps - Simulateur</strong> : Métriques du simulateur de drift<br>
+        • <strong>Velib MLOps - Monitoring Réel</strong> : Monitoring en production
+        </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col_graf1, col_graf2 = st.columns(2)
+        
+        with col_graf1:
+            if st.button("📊 Ouvrir Dashboard Simulateur", use_container_width=True):
+                st.markdown("""
+                <div class="info-card">
+                <p style="margin:0; text-align:center;">
+                <a href="http://localhost:3001" target="_blank" style="color:#667eea; font-weight:600;">
+                Ouvrir Grafana - Simulateur →
+                </a>
+                </p>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with col_graf2:
+            if st.button("📈 Ouvrir Dashboard Réel", use_container_width=True):
+                st.markdown("""
+                <div class="info-card">
+                <p style="margin:0; text-align:center;">
+                <a href="http://localhost:3001" target="_blank" style="color:#667eea; font-weight:600;">
+                Ouvrir Grafana - Monitoring Réel →
+                </a>
+                </p>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with st.expander("ℹ️ Informations sur les métriques", expanded=False):
+            st.markdown("""
+            <div class="info-card">
+            <h4 style="color:#667eea; margin-top:0;">Métriques exposées par le simulateur</h4>
+            <div class="process-step">
+                <div class="step-number">📊</div>
+                <div><strong>velib_drift_score</strong> : Scores de dérive par feature</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">🔔</div>
+                <div><strong>velib_drift_detected_total</strong> : Compteur de détections</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">📈</div>
+                <div><strong>velib_model_performance</strong> : Performance des modèles (XGBoost, LightGBM)</div>
+            </div>
+            <div class="process-step">
+                <div class="step-number">🎯</div>
+                <div><strong>velib_drift_simulator_scenario</strong> : Scénario actif</div>
+            </div>
+            <p style="margin-top:1rem; color:#4a5568; line-height:1.8;">
+            Ces métriques sont mises à jour <strong>toutes les 60 secondes</strong> et sont accessibles 
+            via Prometheus sur le port <code>9103</code>.
+            </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown("---")
+    st.caption("🔧 Monitoring & Maintenance — Projet Vélib' 2025")
