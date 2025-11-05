@@ -196,7 +196,7 @@ with st.sidebar:
 
     st.session_state.selected = option_menu(
         'DASHBOARD',
-        ["SOMMAIRE", "DONNÉES", "ANALYSE", "MODELES ET EVALUATION", "MICROSERVICES & DEPLOIEMENT", "PREDICTIONS", "MONITORING & MAINTENANCE"],
+        ["SOMMAIRE", "DONNÉES", "ANALYSE", "MODELES ET EVALUATION", "ARCHITECTURE", "PREDICTIONS", "MONITORING & MAINTENANCE"],
         icons=['house', 'database', 'speedometer', 'cpu'],
         menu_icon='cast',
         default_index=0
@@ -427,7 +427,7 @@ if st.session_state.selected == "SOMMAIRE":
             ("02", "Data Analyse", "Visualisations et tendances majeures."),
             ("03", "Modèles & Évaluation", "Modèles choisis, paramètres et performance."),
             ("04", "API & Conteneurisation", "Endpoints et image Docker."),
-            ("05", "Microservices & Déploiement", "Architecture, orchestration et mise en prod."),
+            ("05", "Architecture", "Architecture, orchestration et mise en prod."),
             ("06", "Prédictions", "Tentatives de prédiction par le modèle"),
             ("07", "Monitoring & Maintenance", "Suivi en production et améliorations")
         ]
